@@ -1,0 +1,61 @@
+\documentclass{article}
+
+\usepackage{amsmath} % For align and other math environments
+\usepackage{setspace} % For double spacing
+\usepackage{mathtools} % amsmath extensions
+\usepackage{amsfonts} % math fonts
+\usepackage{graphicx} % for images
+\usepackage{listings} % for code blocks
+
+\graphicspath{{ ./images/ }}
+
+\begin{document}
+
+\section{Appendix}
+\singlespacing
+
+Code for generating a sample Wiener process:
+
+\begin{lstlisting}
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import numpy as np
+
+NUM_PATHS = 10
+SAMPLES = 1000
+
+MU = 0
+SIGMA = 1
+
+rng = np.random.default_rng()
+
+def compute_wiener() -> list[float]:
+    value = 0
+    wiener = []
+
+    for _ in range(SAMPLES):
+        s = rng.normal(MU, SIGMA)
+        value += s
+
+        wiener.append(value)
+
+    return wiener
+
+
+df_data = {}
+for i in range(NUM_PATHS):
+    path = compute_wiener()
+    df_data[f'WPath {i}'] = path
+
+plt.figure(figsize=(10, 7))
+
+data = pd.DataFrame(df_data)
+sns.lineplot(data=data)
+
+plt.legend([], [], frameon=False)
+plt.show()
+\end{lstlisting}
+
+
+\end{document}
