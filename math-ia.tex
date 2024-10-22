@@ -1,0 +1,36 @@
+\documentclass{article}
+\usepackage{amsmath} % For align and other math environments
+\usepackage{setspace} % For double spacing
+
+% notes:
+% https://hudsonthames.org/caveats-in-calibrating-the-ou-process/
+
+\begin{document}
+\doublespacing
+
+\section{Brownian Motion and the Wiener Process}
+
+Consider a stochastic process, where per each iteration, we add a $\Delta$ to the previous value,
+this $\Delta$ is distributed by a normal distribution with a $mu$ of zero, and these are independent
+stochastic events this is called the Wiener process. In discrete time, we can define the Wiener process
+with the following equation
+
+\begin{gather*}
+    X_{t + 1} = X_{t} + \mathcal{N}(0, \sigma)
+\end{gather*}
+
+Where $X_{t + 1}$ is the next value of the process (under discrete time), $\mathcal{N}(0, \sigma)$
+is a normally distributed drift variable with the variance $\sigma$.
+
+Intuitively, the expected value, i.e. the limit of this process as it approaches infinity, should
+be zero, since the normal distribution is symmetric.
+
+We know that the the difference between any two consecutive discrite time-points in the Wiener process
+will result in a normally distributed variable $X_{t + 1} - X_{t} = \mathcal{N}(0, \sigma)$, therefore,
+we can 
+
+\begin{gather*}
+
+\end{gather*}
+
+\end{document}
