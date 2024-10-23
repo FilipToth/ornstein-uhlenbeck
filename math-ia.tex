@@ -8,6 +8,8 @@
 \usepackage{listings} % for code blocks
 \usepackage{pgfplots}
 
+\usepackage[a4paper, margin=3.17cm]{geometry}
+
 \graphicspath{{ ./images/ }}
 
 % notes:
@@ -16,7 +18,7 @@
 % interesting: https://arxiv.org/pdf/2003.10502
 
 \begin{document}
-\doublespacing
+\begin{spacing}{2.0}
 
 \section{Brownian Motion and the Wiener Process}
 
@@ -63,6 +65,7 @@ $\theta$.
 
 We know that an exponential function with a negative coefficient applied to the exponent will produce a function that will slowly decay.
 
+\begin{center}
 \begin{tikzpicture}
     \begin{axis}[
         axis lines = left,
@@ -78,6 +81,7 @@ We know that an exponential function with a negative coefficient applied to the 
         \addlegendentry{$f(x) = x_{0} \cdot e^{-\theta x}$}
     \end{axis}
 \end{tikzpicture}
+\end{center}
 
 But this is not exactly mean reverting, we need to adjust the function to not only have the tendency to approach zero, but rather, the function must approach
 the mean. And the function must be applied from any starting point $x_{0}$. Considering that $f(0) = x_{0}$, we can adjust the function and introduce a base
@@ -93,6 +97,7 @@ exponential term. We notice that the difference between $x_0$ and $f(0)$ is equa
 The function produces the following graph, assuming $x_{0} = 1$, $\theta = 0.4$ and varying the initial value $x_{0}$ to be $x_{0} \in \{8, 5, -1 \} $ for each of the
 separate lines respectivelly:
 
+\begin{center}
 \begin{tikzpicture}
     \begin{axis}[
         axis lines = left,
@@ -125,6 +130,7 @@ separate lines respectivelly:
         \addlegendentry{$f(x) = \mu + (x_{0} - \mu) \cdot e^{-\theta x}$}
     \end{axis}
 \end{tikzpicture}
+\end{center}
 
 \subsection{Differentiating for the Mean-reverting Force}
 
@@ -181,6 +187,8 @@ We can not create stochastic paths along the process and they should be mean rev
     \includegraphics[scale=0.35]{./images/naive_ou.png}
 \end{center}
 Here we can see that the stochastic process is much more contained within a range, and is thus mean-reverting.
+
+\end{spacing}
 
 \section{Appendix}
 \singlespacing
