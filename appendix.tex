@@ -11,7 +11,9 @@
 
 \begin{document}
 
+
 \section{Appendix}
+TOFIX: Add term $X_{t}$ to the OU process, it should be $X_{t + 1} = X_{t} + -\theta \cdots$
 \singlespacing
 
 Code for generating a sample Wiener process:
@@ -57,5 +59,54 @@ plt.legend([], [], frameon=False)
 plt.show()
 \end{lstlisting}
 
+Code for generating a sample naive Ornstein-Uhlenbeck process:
+\begin{lstlisting}
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import numpy as np
+
+NUM_PATHS = 2
+SAMPLES = 200
+THETA = 0.2
+MEAN = 0
+
+MU = 0
+SIGMA = 1
+
+rng = np.random.default_rng()
+
+def compute_wiener() -> list[float]:
+    value = 0
+    wiener = []
+
+    for _ in range(SAMPLES):
+        mean_rev_term = -THETA * (value - MEAN)
+        s = mean_rev_term + rng.normal(MU, SIGMA)
+        value += s
+
+        wiener.append(value)
+
+    return wiener
+
+
+df_data = {}
+for i in range(NUM_PATHS):
+    path = compute_wiener()
+    df_data[f'WPath {i}'] = path
+
+data = pd.DataFrame(df_data)
+
+long_form = pd.melt(data.reset_index(), id_vars='index', var_name='Path', value_name='Value')
+long_form.rename(columns={'index': 'Time'}, inplace=True)
+
+plt.figure(figsize=(10, 7))
+sns.lineplot(data=long_form, x='Time', y='Value', hue='Path')
+
+plt.legend([], [], frameon=False)
+plt.show()
+\end{lstlisting}
+
+Note that this is just a draft, code will be refactored and common functions will be declared to shorten the appendix and remove redundancies.
 
 \end{document}

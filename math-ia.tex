@@ -16,6 +16,15 @@
 % https://hudsonthames.org/caveats-in-calibrating-the-ou-process/
 % closed-form OU solution, do this youself tho: https://fxpaul.wordpress.com/2011/05/27/closed-form-solution-of-modified-ornstein-uhlenbeck-process/
 % interesting: https://arxiv.org/pdf/2003.10502
+% https://github.com/david-alber/Pairs-Trading-as-application-to-the-Ornstein-Uhlenbeck-Process
+
+% process calibration:
+% https://dr.lib.iastate.edu/entities/publication/bf86f169-61a5-44fc-8f2f-d8e6cd7e103a
+
+% out-of-sample performance of an OU process:
+% https://onlinelibrary.wiley.com/doi/abs/10.1002/for.2720
+
+% maybe I just didn't account for stochastic drift?
 
 \begin{document}
 \begin{spacing}{2.0}
@@ -94,7 +103,7 @@ exponential term. We notice that the difference between $x_0$ and $f(0)$ is equa
     f(x) = \mu + (x_{0} - \theta)e^{-\theta x}
 \end{gather*}
 
-The function produces the following graph, assuming $x_{0} = 1$, $\theta = 0.4$ and varying the initial value $x_{0}$ to be $x_{0} \in \{8, 5, -1 \} $ for each of the
+The function produces the following graph, assuming $\mu = 4$, $\theta = 0.4$ and varying the initial value $x_{0}$ to be $x_{0} \in \{8, 5, -1 \} $ for each of the
 separate lines respectivelly:
 
 \begin{center}
@@ -190,100 +199,24 @@ Here we can see that the stochastic process is much more contained within a rang
 
 \end{spacing}
 
-\section{Appendix}
-\singlespacing
+\section{Derivation of the Gradient for Non-linear Programming}
+We optimize for the variable $\theta$. We get following base function.
+\begin{gather*}
+    X_{t + 1} = X_{t} + -\theta(X_{t} - \mu)e + \mathcal{N}(0, \sigma^{2}) \\
+\end{gather*}
+We must get the objective function which is thre mean squared error in terms of $\theta$.
+We consider the the values to be in a pre-computed list $\mathcal{X}$, where $\mathcal{X_{1}}, \mathcal{X_{2}}, \cdots, \mathcal{X_{n}} \in \mathcal{X}$
+\begin{gather*}
+    MSE = \frac{1}{T} \sum_{i = 1}^{T} \mathcal{X_{i}} = \frac{1}{T} \sum_{i = 1}^{T} X_{i} + -\theta(X_{t} - \mu)e + \mathcal{N}(0, \sigma^{2})
+\end{gather*}
 
-Code for generating a sample Wiener process:
+\section{Least Squares Regression for Mean-reverting Parameter}
+\begin{gather*}
+    \mathcal{X}_{t + 1} = \mathcal{X}_{t} - \theta (X_{t} - \mu)e + \mathcal{N}(0, \sigma^{2}) \\
+    \mathcal{X}_{t + 1} - \mathcal{X}_{t} - \mathcal{N}(0, \sigma^{2}) = -\theta (X_{t} - \mu)e  \\
+    \frac{- \mathcal{X}_{t + 1} + \mathcal{X}_{t} + \mathcal{N}(0, \sigma^{2})}{e(X_{t} - \mu)} = \theta
+\end{gather*}
 
-\begin{lstlisting}
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
-import numpy as np
-
-NUM_PATHS = 10
-SAMPLES = 1000
-
-MU = 0
-SIGMA = 1
-
-rng = np.random.default_rng()
-
-def compute_wiener() -> list[float]:
-    value = 0
-    wiener = []
-
-    for _ in range(SAMPLES):
-        s = rng.normal(MU, SIGMA)
-        value += s
-
-        wiener.append(value)
-
-    return wiener
-
-
-df_data = {}
-for i in range(NUM_PATHS):
-    path = compute_wiener()
-    df_data[f'WPath {i}'] = path
-
-plt.figure(figsize=(10, 7))
-
-data = pd.DataFrame(df_data)
-sns.lineplot(data=data)
-
-plt.legend([], [], frameon=False)
-plt.show()
-\end{lstlisting}
-
-Code for generating a sample naive Ornstein-Uhlenbeck process:
-\begin{lstlisting}
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
-import numpy as np
-
-NUM_PATHS = 2
-SAMPLES = 200
-THETA = 0.2
-MEAN = 0
-
-MU = 0
-SIGMA = 1
-
-rng = np.random.default_rng()
-
-def compute_wiener() -> list[float]:
-    value = 0
-    wiener = []
-
-    for _ in range(SAMPLES):
-        mean_rev_term = -THETA * (value - MEAN)
-        s = mean_rev_term + rng.normal(MU, SIGMA)
-        value += s
-
-        wiener.append(value)
-
-    return wiener
-
-
-df_data = {}
-for i in range(NUM_PATHS):
-    path = compute_wiener()
-    df_data[f'WPath {i}'] = path
-
-data = pd.DataFrame(df_data)
-
-long_form = pd.melt(data.reset_index(), id_vars='index', var_name='Path', value_name='Value')
-long_form.rename(columns={'index': 'Time'}, inplace=True)
-
-plt.figure(figsize=(10, 7))
-sns.lineplot(data=long_form, x='Time', y='Value', hue='Path')
-
-plt.legend([], [], frameon=False)
-plt.show()
-\end{lstlisting}
-
-Note that this is just a draft, code will be refactored and common functions will be declared to shorten the appendix and remove redundancies.
+For now, we can disregard the normally-distributed Wiener process term.
 
 \end{document}
