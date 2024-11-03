@@ -3,3 +3,4 @@ install/
 *.fls
 *.fdb_latexmk
 *.aux
+math-ia.synctex.gz
