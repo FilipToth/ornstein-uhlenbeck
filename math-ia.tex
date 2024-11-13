@@ -29,6 +29,9 @@
 % rly interesting:
 % https://github.com/david-alber/Pairs-Trading-as-application-to-the-Ornstein-Uhlenbeck-Process/blob/master/Report%2BPoster/Pairs_Trading_Doc.pdf
 
+% dickey fuller:
+% https://www.youtube.com/watch?v=1opjnegd_hA
+
 \begin{document}
 \begin{spacing}{2.0}
 
@@ -200,9 +203,69 @@ We can not create stochastic paths along the process and they should be mean rev
 \end{center}
 Here we can see that the stochastic process is much more contained within a range, and is thus mean-reverting.
 
-\end{spacing}
+\section{Long-term Equilibrium Cointegration in Equity Markets}
+
+We perform the \textbf{Two Step Engle-Granger Test} for cointegration of time series to get the cointegration coefficient. This method is widely accepted
+in quantitative finance and econometrics.
+
+But what is cointegration? Cointegration represents level to which a linear combination
+of two (or more) time series $X_{t} = \beta Y_{t}$ follows a stationary time series $I(0)$.
+Or in other words, whether the linear combination has a zero long-term mean. We can take
+any linear combination, such as the linear regression of $X_{t}$ on $Y_{t}$, in the next
+sub-chapter, we form this regression and add an error term, the error term is esentially
+formed from a linear combination of the two time series. A high cointegration coefficient
+means that the two time series move in tandem with each other and that deviations in their
+spread reverts to the long-term mean (since the mean of the spread is zero), divergence of
+spreads resulting in a zero long-term mean spread is impossible because the function is
+continuous.
+
+\subsection{Regressing the two time series}
+
+First, we need to determine the residuals $\hat \epsilon_{t}$ (similar to the error) of a regression between
+the two time series of the prices of the equities we're analyzing. We define a linear regression $Y_{t} = \alpha + \beta X_{t} + \epsilon_{t}$.
+Where $Y_{t}$ and $X_{t}$ are the $t$-th elements of the time series of the equity prices of $X$ and $Y$. And where $\alpha$ is the
+intercept term (which is the mean level of $Y_{t}$ where $X_{t}$ is zero) and where $\beta$ is mean slope coefficient, i.e. the change in
+the value of $Y_{t}$ per unit $X_{t}$.
+We define the following intuitively or from the definition of the linear regression:
+\begin{gather*}
+    \beta = \frac{
+        \sum_{i = 0}^{n}{(X_{i} - \mu_{X}) \cdot (Y_{i} - \mu_{Y})}
+    }{
+        \sum_{x \in X} (x - \mu_{X})^2
+    }
+    \\ 
+    \alpha = \mu_{Y} - \beta \cdot \mu_{X}
+\end{gather*}
+Now we calculate the residuals $\hat \epsilon_{t}$ using the formula $\hat \epsilon_{t} = Y_{t} - (\alpha + \beta X_{t})$, which we obtain from rearranging the
+terms of the linear regression equation with resduals. We can interpret these residuals as the difference (for each timestep $t$) between the actual value $X_{t}$
+and the predicted value - the value of the regression solution for the parameter $t$.
+
+\subsection{Dickey Fuller Test}
+
+We assume that our time series follows an Auto-regressive AR(1) model, which is true for equity spreads. AR(1) models are characterized by the following:
+\begin{gather*}
+    X_{t} = M + \phi_{1} X_{t - 1} + \epsilon_{t}
+\end{gather*}
+Next, we can define our hypotheses, $H_{0} : \phi_{1} = 1$ means that we have a unit root and $H_{1} : \phi_{1} < 1$ means we don't have a unit root.
+We can now rewrite the AR(1) equation in terms of the difference between the current and previous value $X_{t} - X_{t - 1} = \Delta X_{t}$. Note that $\delta = \phi_{1} - 1$.
+\begin{gather*}
+    X_{t} - X_{t - 1} = M + X_{t - 1}(\phi_{1} - 1) + \epsilon_{t} \\
+    \Delta X_{t} = M + \delta X_{t - 1} + \epsilon_{t}
+\end{gather*}
+We can now restructure our hypotheses in terms of $\delta$ instead of $\phi_{1}$.
+\begin{gather*}
+    H_{0} : \delta = 0 \\
+    H_{1} : \delta < 0
+\end{gather*}
+Now we can consider that the null hypothesis is true and try to refute it. Since
+
+\subsection{Augmented Dickey-Fuller Test}
+
+We now have a set of residuals $\hat \epsilon_{t}$. This results in another time series comprised of residuals at each time step $t$. We can now use the
+Augmented Dickey Fuller Test to check for if the resultant time series is stationary and contains a unit root.
 
 \section{Derivation of the Gradient for Non-linear Programming}
+
 We optimize for the variable $\theta$. We get following base function.
 \begin{gather*}
     X_{t + 1} = X_{t} + -\theta(X_{t} - \mu)e + \mathcal{N}(0, \sigma^{2}) \\
@@ -221,5 +284,7 @@ We consider the the values to be in a pre-computed list $\mathcal{X}$, where $\m
 \end{gather*}
 
 For now, we can disregard the normally-distributed Wiener process term.
+Have to use Ito's Lemma.
 
+\end{spacing}
 \end{document}
