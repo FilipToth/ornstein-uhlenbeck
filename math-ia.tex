@@ -30,6 +30,9 @@
 % dickey fuller:
 % https://www.youtube.com/watch?v=1opjnegd_hA
 
+% source for unit-root testing (part of Engle Granger Test):
+% https://pages.stern.nyu.edu/~churvich/Forecasting/Handouts/UnitRoot.pdf
+
 \begin{document}
 \begin{spacing}{2.0}
 
@@ -242,13 +245,13 @@ and the predicted value - the value of the regression solution for the parameter
 
 We assume that our time series follows an Auto-regressive AR(1) model, which is true for equity spreads. AR(1) models are characterized by the following:
 \begin{gather*}
-    X_{t} = M + \phi_{1} X_{t - 1} + \epsilon_{t}
+    X_{t} = \mu + \phi_{1} X_{t - 1} + \epsilon_{t}
 \end{gather*}
 Next, we can define our hypotheses, $H_{0} : \phi_{1} = 1$ means that we have a unit root and $H_{1} : \phi_{1} < 1$ means we don't have a unit root.
 We can now rewrite the AR(1) equation in terms of the difference between the current and previous value $X_{t} - X_{t - 1} = \Delta X_{t}$. Note that $\delta = \phi_{1} - 1$.
 \begin{gather*}
-    X_{t} - X_{t - 1} = M + X_{t - 1}(\phi_{1} - 1) + \epsilon_{t} \\
-    \Delta X_{t} = M + \delta X_{t - 1} + \epsilon_{t}
+    X_{t} - X_{t - 1} = \mu + X_{t - 1}(\phi_{1} - 1) + \epsilon_{t} \\
+    \Delta X_{t} = \mu + \delta X_{t - 1} + \epsilon_{t}
 \end{gather*}
 We can now restructure our hypotheses in terms of $\delta$ instead of $\phi_{1}$.
 \begin{gather*}
