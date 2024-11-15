@@ -33,6 +33,9 @@
 % source for unit-root testing (part of Engle Granger Test):
 % https://pages.stern.nyu.edu/~churvich/Forecasting/Handouts/UnitRoot.pdf
 
+% very good video on DF and ADF tests, doesn't actually really explain how to do them:
+% https://www.youtube.com/watch?v=T5BhGv742j4
+
 \begin{document}
 \begin{spacing}{2.0}
 
@@ -209,14 +212,14 @@ Here we can see that the stochastic process is much more contained within a rang
 We perform the \textbf{Two Step Engle-Granger Test} for cointegration of time series to get the cointegration coefficient. This method is widely accepted
 in quantitative finance and econometrics.
 
-But what is cointegration? Cointegration represents level to which a linear combination
+But what is cointegration? Cointegration represents the level to which a linear combination
 of two (or more) time series $X_{t} = \beta Y_{t}$ follows a stationary time series $I(0)$.
 Or in other words, whether the linear combination has a zero long-term mean. We can take
 any linear combination, such as the linear regression of $X_{t}$ on $Y_{t}$, in the next
 sub-chapter, we form this regression and add an error term, the error term is esentially
 formed from a linear combination of the two time series. A high cointegration coefficient
 means that the two time series move in tandem with each other and that deviations in their
-spread reverts to the long-term mean (since the mean of the spread is zero), divergence of
+spread revert to the long-term mean (since the mean of the spread is zero), divergence of
 spreads resulting in a zero long-term mean spread is impossible because the function is
 continuous.
 
@@ -234,36 +237,82 @@ We define the following intuitively or from the definition of the linear regress
     }{
         \sum_{x \in X} (x - \mu_{X})^2
     }
-    \\ 
+    \\
     \alpha = \mu_{Y} - \beta \cdot \mu_{X}
 \end{gather*}
 Now we calculate the residuals $\hat \epsilon_{t}$ using the formula $\hat \epsilon_{t} = Y_{t} - (\alpha + \beta X_{t})$, which we obtain from rearranging the
 terms of the linear regression equation with resduals. We can interpret these residuals as the difference (for each timestep $t$) between the actual value $X_{t}$
 and the predicted value - the value of the regression solution for the parameter $t$.
 
+
+
 \subsection{Dickey Fuller Test}
 
-We assume that our time series follows an Auto-regressive AR(1) model, which is true for equity spreads. AR(1) models are characterized by the following:
+The Dickey Fuller Test or (DF Test for short) is a statistical test that tests for the stationarity of a time series, or in other words, it tests for if the
+order of integration of the time series is $I(0)$. The non-augmented version of the Dickey Fuller Test is only applicable for an auto-regressive AR(1) process.
+Equity spreads are widely considered to be AR(1) processes. We can define an AR(1) time series as $y_{t} = \alpha + \phi y_{t - 1} + \epsilon_{t}$, where $\alpha$ is
+the constant shift term, $\phi y_{t - 1}$ is the autoregressive term where $\phi$ is a coefficient denoting how strongly the previous value of the time series
+affects the current value at time $t$, and $\epsilon_{t}$ (not to be confused with the residuals from our regression model) denotes a random error term, which IS
+assumed to be white noise $\epsilon_{t} \sim \mathcal{N}(0, \sigma^2)$. Now we can define the hypotheses for the DF Test.
 \begin{gather*}
-    X_{t} = \mu + \phi_{1} X_{t - 1} + \epsilon_{t}
+    H_{0} : \phi = 1 \\
+    H_{1} : \phi < 1
 \end{gather*}
-Next, we can define our hypotheses, $H_{0} : \phi_{1} = 1$ means that we have a unit root and $H_{1} : \phi_{1} < 1$ means we don't have a unit root.
-We can now rewrite the AR(1) equation in terms of the difference between the current and previous value $X_{t} - X_{t - 1} = \Delta X_{t}$. Note that $\delta = \phi_{1} - 1$.
+Where the null hypothesis denotes that the process is non-stationary and the alternative hypothesis indicates that the process is stationary. We could simply use a t-test
+to see if a $\hat \phi$ estimator is statistically significant, and based on that reject or fail to reject the null hypothesis of the DF Test. But the t-test is inapplicable
+in models where the central limit theorem doesn't hold true (because the $\epsilon$ values of the process are not independent and identically distributed), thus we need to use the
+DF test. First, we transform our original time series expression in as a differencing equation. Note that we also rewrite the $y_{t} - y_{t - 1}$ as $\Delta y_{t}$.
 \begin{gather*}
-    X_{t} - X_{t - 1} = \mu + X_{t - 1}(\phi_{1} - 1) + \epsilon_{t} \\
-    \Delta X_{t} = \mu + \delta X_{t - 1} + \epsilon_{t}
+    y_{t} = \alpha + \phi y_{t - 1} + \epsilon_{t} \\
+    y_{t} - y_{t - 1} = \alpha + \phi y_{t - 1} - y_{t - 1} + \epsilon_{t} \\
+    \Delta y_{t} = \alpha + y_{t - 1} (\phi - 1) + \epsilon_{t}
 \end{gather*}
-We can now restructure our hypotheses in terms of $\delta$ instead of $\phi_{1}$.
+For the sake of simplicity, we introduce $\delta$ instead of $(\phi - 1)$. We can simplify our express to $\Delta y_{t} = \alpha + \delta y_{t - 1} + \epsilon_{t}$, which is
+the standard form you'll find in most literature on the DF Test. Our hypotheses remain and can be rewritten in terms of $\delta$ instead of $\phi$.
 \begin{gather*}
     H_{0} : \delta = 0 \\
     H_{1} : \delta < 0
 \end{gather*}
-Now we can consider that the null hypothesis is true and try to refute it. Since
+We apply an Ordinary Least Squares linear regression to find the estimator $\hat \delta$, this is the p-value for our test and we compare it against our hypotheses. But in our case,
+we this won't be rigorous enough since we didn't account for autocorrelation (In our case, this means that previous values have some sort of effect on the current value $y_{t}$ in our
+time series) properties of financial time series, to remedy this and correctly account for autocorrelation, we use the Augmented Dickey Fuller Test or ADF for short.
 
-\subsection{Augmented Dickey-Fuller Test}
+\subsection{Augmented Dickey Fuller Test}
 
-We now have a set of residuals $\hat \epsilon_{t}$. This results in another time series comprised of residuals at each time step $t$. We can now use the
-Augmented Dickey Fuller Test to check for if the resultant time series is stationary and contains a unit root.
+This is an extension of the Dickey Fuller Test that correctly accounts for autocorrelation between consecutive values of the time series and is also extended to the autoregressive
+AR(p) process; it tests whether a time series of the order of integration $I(p)$ is stationary and for the presence of a unit root (which is a prerequisite of non-stationarity).
+In the ADF test, our hypotheses stay the same.
+\begin{gather*}
+    H_{0} : \delta = 0 \text{ $\rightarrow$ non-stationary, unit root} \\
+    H_{1} : \delta < 0 \text{ $\rightarrow$ stationary, no unit root}
+\end{gather*}
+We need to add lags to our expression to account for autocorrelation. We can model autocorrelation as some coefficient applied on some previous value of the time series also being
+accounted in the value of the time series at $t$. Considering we add two lags to account for autocorrelation between the current value $y_{t}$ and values $y_{t - 1}$ and $y_{t - 2}$,
+our expression will intuitively become $\Delta y_{t} = \alpha + y_{t - 1} (\phi - 1) + \beta_{1}(\Delta y_{t - 1}) + \beta_{2}(\Delta y_{t - 2}) + \epsilon_{t}$. Where the betas $\beta_{1}$
+are our coefficients onf the lagged differences. We also define $p$ to be the number of lags we include, this value is automatically optimized in various statistical application
+programming interfaces (APIs) and one can use various Bayesian estimation methods to get the optimal $p$ value, or one can perform a t-test (or an F-test when testing for the significance
+of multiple variables) and keep adding lagged differences (thus increasing $p$) until the addition is no longer statistically significant. Our expression can be generalized in the
+following form:
+\begin{gather*}
+    \Delta y_{t} = \alpha \delta y_{t - 1} + \sum_{i = 1}^{p} \beta_{i} \Delta y_{t - 1} + \epsilon_{t}
+\end{gather*}
+Now that we have this equation, we can do an Ordinary Least Squares regression (in its multiple linear regression form, since we have multiple regressors) to find
+$\alpha, \delta, \beta_{1}, \beta_{2}, \cdots, \beta_{p}$, we then use the $\delta$ value as the final p-value for the Augmented Dickey Fuller Test.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \section{Derivation of the Gradient for Non-linear Programming}
 
