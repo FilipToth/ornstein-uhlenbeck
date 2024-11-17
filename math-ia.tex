@@ -6,7 +6,8 @@
 \usepackage{amsfonts} % math fonts
 \usepackage{graphicx} % for images
 \usepackage{listings} % for code blocks
-\usepackage{pgfplots}
+\usepackage{pgfplots} % for plotting function
+\usepackage{booktabs} % for tables
 
 \usepackage[a4paper, margin=3.17cm]{geometry}
 
@@ -223,7 +224,7 @@ spread revert to the long-term mean (since the mean of the spread is zero), dive
 spreads resulting in a zero long-term mean spread is impossible because the function is
 continuous.
 
-\subsection{Regressing the two time series}
+\subsection{Static Regression of Equity Time Series}
 
 First, we need to determine the residuals $\hat \epsilon_{t}$ (similar to the error) of a regression between
 the two time series of the prices of the equities we're analyzing. We define a linear regression $Y_{t} = \alpha + \beta X_{t} + \epsilon_{t}$.
@@ -299,17 +300,61 @@ following form:
 Now that we have this equation, we can do an Ordinary Least Squares regression (in its multiple linear regression form, since we have multiple regressors) to find
 $\alpha, \delta, \beta_{1}, \beta_{2}, \cdots, \beta_{p}$, we then use the $\delta$ value as the final p-value for the Augmented Dickey Fuller Test.
 
+\subsection{Performing the Two-Step Engle Granger Test on Equity Prices}
 
+We now perform the two-step engle granger test on 78 mature stocks from the selected from NADSAQ-100 index from Janurary 1st 2014 to January 1st 2024. We pair every stock with every other
+stock resulting in $78^2 = 6084$ pairs, for each of these pairs we perform an OLS regression and get the residual values (as described in subsection 1) and then perform the Augmented Dickey
+Fuller Test using the 'statsmodels' library. We extract the p-values of the test and end up with the following heatmap:
+\begin{center}
+    \includegraphics[scale=0.45]{./images/cointegration.png}
+\end{center}
+Only 100 pairs are displayed as the complete 78x78 heatmap is too large to present here.
 
+We now select 10 of the most cointegrated (lowest p-values) equity pairs to further examine, the ten most cointegrated pairs were, in descending order of cointegration, we observe
+that most of the equity pairs with very heavy cointegration have AAPL (Apple Inc.) as the base stock, this is interesting as AAPL has heavily outperformed even the growth-heavy
+NASDAQ, thus this should create a larger spread between most other stocks, suggesting limitations of our test.
 
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|c|c|c|}
+        \hline
+        \textbf{Stock 1 Ticker} & \textbf{Stock 2 Ticker} & \textbf{ADF P-Value} \\ \hline
+        AAPL & XRAY & 9.104296439449678e-05 \\ \hline
+        AAPL & WBA & 0.00011254543577701014 \\ \hline
+        AAPL & VRTX & 0.00014280647279306093 \\ \hline
+        AAPL & VRSK & 0.00015429781044445213 \\ \hline
+        AMGN & WBA & 0.00016469559752946386 \\ \hline
+        AAPL & TSCO & 0.00016489122300362627 \\ \hline
+        AAPL & WDC & 0.0001652537550668745 \\ \hline
+        AAPL & TSLA & 0.00017722866444703876 \\ \hline
+        AMGN & VOD & 0.00018081206670114813 \\ \hline
+        AAPL & TXN & 0.00018223283943511726 \\ \hline
+    \end{tabular}
+\end{table}
 
+For reference, we can plot the residuals of the initial regression of a select heavily cointegrated
+pair and a non-cointegrated pair to better visualize the idea of cointegration.
 
+\begin{figure}[h!]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{./images/amgn_vod_cointegration.png}
+        \caption{AMGN, VOD, p-value: 0.000181}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{./images/adbe_tsla_cointegration.png}
+        \caption{ADBE, TSLA, p-value: 0.484251}
+    \end{minipage}
+\end{figure}
 
+\subsection{Engle Granger Residuals vs Equity Spreads}
 
-
-
-
-
+If we plot the residuals of AMGN and VOD, we can observe that the resultant time series clearly follows an OU process (or a time-discrete AR(1) time series), as is also indicated
+by the test we performed, but if we plot the equity spreads (values of stock 1 minues values of stock 2), we observe a different pattern, indicating that our model is still incomplete
+and that OLS residuals might not give us the full picture.
 
 
 
