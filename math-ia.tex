@@ -8,6 +8,7 @@
 \usepackage{listings} % for code blocks
 \usepackage{pgfplots} % for plotting function
 \usepackage{booktabs} % for tables
+\usepackage{float}
 
 \usepackage[a4paper, margin=3.17cm]{geometry}
 
@@ -191,9 +192,7 @@ We can rearrange this to:
 \end{gather*}
 This differential desribes the mean-reverting tug applied to our brownian motion model.
 
-\subsection{Deriving a full Ornstein Uhlenbeck Process}
-
-NOT SURE IF THIS IS THE BEST WAY TO DO IT, MIGHT NOT BE IN THE FINAL IA.
+\subsection{Full Naive Derivation of the OU Process}
 
 We can now try to perform a few experiments on a naively-formulated OU (Ornstein Uhlenbeck) process. We can begin by simply adding a brownian motion to our stochastic
 process, and assuming (naive step) $X_{0} = X_{t}$, since at each point, the differential will get us tug, this will mean that our $t$ is now zero.
@@ -202,11 +201,36 @@ We are left with the following stochastic process:
     X_{t + 1} = -\theta(X_{t} - \mu)e^{-\theta \cdot 0} + W_{t} \\
     X_{t + 1} = -\theta(X_{t} - \mu)e + \mathcal{N}(0, \sigma^{2})
 \end{gather*}
-We can not create stochastic paths along the process and they should be mean reverting.
+We can not create stochastic paths along the process and they should be mean reverting. A stochastic path (more formally called a sample path of a stochastic process) is simply
+a possible outcome of running the process, esentially a random path that conforms to the process.
 \begin{center}
     \includegraphics[scale=0.35]{./images/naive_ou.png}
 \end{center}
 Here we can see that the stochastic process is much more contained within a range, and is thus mean-reverting.
+
+\subsection{Formal Derivation of the OU Process}
+
+The Ornstein Uhlenbeck process is formally defined as a stochastic differential equation (SDE). An SDE is just a differential equation with a stochastic term.
+
+We begin with adding a brownian motion component. A standard wiener process in its differential form is: $dX_{t} = dW_{t}$, this is pretty straight forward if you think about it,
+the change in $X_{t}$ is just the change in $W_{t}$, this being a stochastic component, $dW_{t}$ will always be different, and for the sake of simplicity, we can visualize this as if
+the term follows the normal distribution $dW_{t} \sim \mathcal{N}(0, \sigma^2)$, this isn't entire true because the variance of the normal distribution itself depends on $dt$,
+but we will get to that later.
+
+We now add the drift term (which we derived in a previous subchapter) $\theta(\mu - X_{t})$ (we derived it as $-\theta(X_{t} - \mu)$, but these are functionally equivalent), we can say that this drift happens
+- continuously - over time t, thus can be written as $\theta(\mu - X_{t}) dt$, recall that $dt$ here represents an infinitesmal (very small) change in time $t$, thus the whole term
+represents the change in the process value $X_{t}$ as we change time $t$ by an infinitesmal amount and can thus be written as $\frac{d X_{t}}{dt} = \theta(\mu - X_{t})$, but this
+is just basic differential equations. We end up with:
+\begin{gather*}
+    dX_{t} = \theta(\mu - X_{t}) dt + dW_{t}
+\end{gather*}
+We also add a variable $\sigma$ to our process, not to be confused with the standard deviation, in our context, $\theta$ represents the intensity of the brownian motion (stochastic)
+component. We end up with the final formal definition of the OU process:
+\begin{gather*}
+    dX_{t} = \theta(\mu - X_{t}) dt + \sigma dW_{t}
+\end{gather*}
+
+\subsection{Analytical Solution to the Ornstein-Uhlenbeck SDE}
 
 \section{Long-term Equilibrium Cointegration in Equity Markets}
 
@@ -298,7 +322,7 @@ following form:
     \Delta y_{t} = \alpha \delta y_{t - 1} + \sum_{i = 1}^{p} \beta_{i} \Delta y_{t - 1} + \epsilon_{t}
 \end{gather*}
 Now that we have this equation, we can do an Ordinary Least Squares regression (in its multiple linear regression form, since we have multiple regressors) to find
-$\alpha, \delta, \beta_{1}, \beta_{2}, \cdots, \beta_{p}$, we then use the $\delta$ value as the final p-value for the Augmented Dickey Fuller Test.
+$\alpha, \delta, \beta_{1}, \beta_{2}, \dots, \beta_{p}$, we then use the $\delta$ value as the final p-value for the Augmented Dickey Fuller Test.
 
 \subsection{Performing the Two-Step Engle Granger Test on Equity Prices}
 
@@ -314,7 +338,7 @@ We now select 10 of the most cointegrated (lowest p-values) equity pairs to furt
 that most of the equity pairs with very heavy cointegration have AAPL (Apple Inc.) as the base stock, this is interesting as AAPL has heavily outperformed even the growth-heavy
 NASDAQ, thus this should create a larger spread between most other stocks, suggesting limitations of our test.
 
-\begin{table}[h!]
+\begin{table}[H]
     \centering
     \begin{tabular}{|c|c|c|}
         \hline
@@ -335,7 +359,7 @@ NASDAQ, thus this should create a larger spread between most other stocks, sugge
 For reference, we can plot the residuals of the initial regression of a select heavily cointegrated
 pair and a non-cointegrated pair to better visualize the idea of cointegration.
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \begin{minipage}{0.48\textwidth}
         \centering
@@ -354,9 +378,45 @@ pair and a non-cointegrated pair to better visualize the idea of cointegration.
 
 If we plot the residuals of AMGN and VOD, we can observe that the resultant time series clearly follows an OU process (or a time-discrete AR(1) time series), as is also indicated
 by the test we performed, but if we plot the equity spreads (values of stock 1 minues values of stock 2), we observe a different pattern, indicating that our model is still incomplete
-and that OLS residuals might not give us the full picture.
+and that OLS residuals might not give us the full picture. Let's examine the difference between the graph of the residuals and the graph of the spreads:
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{./images/amgn_vod_cointegration.png}
+        \caption{AMGN-VOD cointegration regression residuals}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{./images/spread_amgn_vod.png}
+        \caption{AMGN-VOD spread with line of best fit}
+    \end{minipage}
+\end{figure}
+
+We can see that the cointegration esentially disregards deterministic drift in the spreads (deterministic drift is esentially the non-stochastic trend). This makes sense if you think
+about our test methodology, we defined an OLS linear regression between two stock price time series and then we used to residuals to perform the stationarity test, our graph just
+shows the residuals at each time step. A residual is just the difference between the what the regression model predicts (using a standard linear equation model $y = \beta x + \alpha$)
+and the actual value of the time series.
+
+Our Ornstein Uhlenbeck model resembles the residuals and not the actual spreads, it doesn't yet account for deterministic drift.
+
+\section{Optimal Execution Region and OU Trading Strategy}
+
+We define an Ornstein Uhlenbeck process with the following Stochastic Differential Equation and we have an analytical solution:
+\begin{gather*}
+    dX_{t} = \theta(\mu - X_{t}) dt - \sigma dW_{t} \\
+    X_{t} = Y_{t} + \mu = \mu + e^{-\theta(t - s)}(X_{s} - \mu) + \sigma \int_{s}^{t} e^{-\theta(t - u)} dW_{u}
+\end{gather*}
 
 
+\section{Ajne Street}
+\begin{center}
+    \includegraphics[scale=0.35]{./images/argb.png}
+\end{center}
+
+{ \Huge Pls hire me any internships pls }
 
 
 \section{Derivation of the Gradient for Non-linear Programming}
@@ -366,7 +426,7 @@ We optimize for the variable $\theta$. We get following base function.
     X_{t + 1} = X_{t} + -\theta(X_{t} - \mu)e + \mathcal{N}(0, \sigma^{2}) \\
 \end{gather*}
 We must get the objective function which is thre mean squared error in terms of $\theta$.
-We consider the the values to be in a pre-computed list $\mathcal{X}$, where $\mathcal{X}_{1}, \mathcal{X}_{2}, \cdots, \mathcal{X}_{n} \in \mathcal{X}$
+We consider the the values to be in a pre-computed list $\mathcal{X}$, where $\mathcal{X}_{1}, \mathcal{X}_{2}, \dots, \mathcal{X}_{n} \in \mathcal{X}$
 \begin{gather*}
     MSE = \frac{1}{T} \sum_{i = 1}^{T} \mathcal{X}_{i} = \frac{1}{T} \sum_{i = 1}^{T} X_{i} + -\theta(X_{t} - \mu)e + \mathcal{N}(0, \sigma^{2})
 \end{gather*}
