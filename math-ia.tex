@@ -38,6 +38,13 @@
 % very good video on DF and ADF tests, doesn't actually really explain how to do them:
 % https://www.youtube.com/watch?v=T5BhGv742j4
 
+
+% notes on stochastic processes and SDEs
+% https://math.nyu.edu/~goodman/teaching/DerivSec10/notes/week6.pdf
+% https://planetmath.org/analyticsolutiontoornsteinuhlenbecksde
+% https://geelon.github.io/assets/talks/sde.pdf
+% https://ludwigwinkler.github.io/blog/SolvingSDEs/
+
 \begin{document}
 
 \begin{titlepage}
@@ -244,7 +251,6 @@ component. We end up with the final formal definition of the OU process:
     dX_{t} = \theta(\mu - X_{t}) dt + \sigma dW_{t}
 \end{gather*}
 
-\subsection{Analytical Solution to the Ornstein-Uhlenbeck SDE}
 
 \section{Long-term Equilibrium Cointegration in Equity Markets}
 
@@ -416,12 +422,113 @@ and the actual value of the time series.
 
 Our Ornstein Uhlenbeck model resembles the residuals and not the actual spreads, it doesn't yet account for deterministic drift.
 
-\section{Optimal Execution Region and OU Trading Strategy}
+\section{Fitting the Ornstein Uhlenbeck Process to our Data}
+
+There are two ways you can calibrate an Ornstein Uhlenbeck process for a particular dataset. Either using a simple OLS regression for the OU parameters ($\theta$, $\sigma$, $\mu$), or
+you can use a much more rigorous technique that yields better results, called: Maximum Likelyhood Estimation (MLE), while if this weren't a Math IA, I would use MLE (due to there already
+being pre-existing implementation and it being fairly easy to understand, just requires basic multivariable calculus), we do not have the capacity to explain MLE in this IA, additionally,
+OLS parameter estimation is frequently used in Quant Finance, despite it's obvious limitations. The first step is obtaining a formal solution to the OU stochastic differential equation (SDE).
+
+\subsection{Formal Analytical Solution to the OU SDE}
+
+We start with the OU SDE we derived in a previously, and we expand the deterministic drift term.
+\begin{gather*}
+    dX_{t} = \theta (\mu - X_{t})dt + \sigma dW_{t} \\
+    dX_{t} = \theta \mu dt - \theta X_{t} dt + \sigma dW_{t}
+\end{gather*}
+Looking at the deterministic part of our SDE $dX_{t} = \theta \mu dt - \theta X_{t} dt$, we notice that we need to simplify this ordinary differential equation (ODE) and
+find an integrating factor. An integrating dactor is given by the following: $I(x) = e^{\int P(x) \, dx}$, where $P(x)$ is defined by the standard form of a first-order ODE:
+$\frac{dx}{dy} + P(x) y = Q(x)$, which we can fit to our deterministic ODE:
+\begin{gather*}
+    \frac{dX_{t}}{dt} = \theta \mu - \theta X_{t} \\
+    \frac{dX_{t}}{dt} + \theta X_{t} = \theta \mu
+\end{gather*}
+where ${P(x) = \theta}$ and $Q(x) = \theta \mu$, we can now use the above-mentioned formula to find the integrating factor, $I(t) = e^{\int P(t) \, dx}$ (notice that
+we switch to $t$ since $dt$ is our differential and not $dx$). Subce $\theta$ is a constant, we can easily evaluate the integral $\int \theta \, dt = \theta t + C$,
+thus our integrating factor becomes: $I(t) = e^{\theta t}$, notice that we deliberately ignore the constant term $C$. Now, going back to our SDE, we can apply our
+integrating factor.
+\begin{gather*}
+    dX_{t} = \theta \mu dt - \theta X_{t} dt + \sigma dW_{t} \\
+    e^{\theta t} dX_{t} = e^{\theta t} \theta \mu dt -  e^{\theta t} \theta X_{t} dt + e^{\theta t} \sigma dW_{t}
+\end{gather*}
+We now notice that we can use the product rule of differentiation to simplify the above SDE. If we rearrange the SDE, we notice that
+$e^{\theta t} dX_{t} + e^{\theta t} \theta X_{t} dt$ conforms to the product rule, that states $(u \cdot v)' = u \cdot v' + u' \cdot v$. We aim to express our two terms
+as a single stochastic derivative, we can't simply use a regular derivative since $X_{t}$ is a stochastic process, thus we introduce the Itô's derivative, which is a derivative
+on a stochastic process, and in our case $d(\cdot)$ represents an infinitesmal change in the stochasric process changes with respect to time $t$, this can be expanded with the
+use of the Itô's Lemma. Going back to solving our SDE, we work backwards through the application of the product rule and see that $u = e^{\theta t}$ and $v = X_{t}$, our terms
+will simplify to:
+\begin{gather*}
+    d\left ( e^{\theta t} \cdot X_{t} \right ) = e^{\theta t} dX_{t} + e^{\theta t} \theta X_{t} dt
+\end{gather*}
+And we can apply this to the SDE, like so:
+\begin{gather*}
+    e^{\theta t} dX_{t} = e^{\theta t} \theta \mu dt -  e^{\theta t} \theta X_{t} dt + e^{\theta t} \sigma dW_{t} \\
+    e^{\theta t} dX_{t} + e^{\theta t} \theta X_{t} dt = e^{\theta t} \theta \mu dt + e^{\theta t} \sigma dW_{t} \\
+    d\left ( e^{\theta t} \cdot X_{t} \right ) = e^{\theta t} \theta \mu dt + e^{\theta t} \sigma dW_{t}
+\end{gather*}
+Now we can integrate to find the general solution to the linear stochastic differential equation. Note that for our stochastic components, we can't perform the regular
+Riemann Integral, but rather, we have to use the Itô Integral. We define an Itô Integral as an integral on a stochastic process, the result of the Itô Integral is another
+stochastic process, that esentially defines the "sum" of the process up until a certain time $t$, it can again, be solved by application of the Itô's Lemma. We define a general
+Itô Integral as:
+\begin{gather*}
+    \int_{0}^{t} f(s) dX_{s}
+\end{gather*}
+Where $f(s)$ is a deterministic process, which is generated from a filtration $\mathcal{F}(s)$, which is just a collection of all known information about the process up until a time
+$s$. You can think of $f(s)$ as just a deterministic process that describes how the stochastic process behaves over time $s$. And $dX_{t}$ is, of course, is an infinitesmal change in
+the stochastic process $X_{t}$. Let's take our brownian motion term as an example, $\int_{0}^{t} e^{\theta t} \sigma dW_{s}$, our deterministic process generated by the filtration
+$\mathcal{F}(s)$ would be $f(s) = e^{\theta t} \sigma$, note that this is constant and not dependent on time $s$. We can now applt the Itô Integral on the left-hand side of the SDE
+and on the stochastic Wiener Process term.
+\begin{gather*}
+    d\left ( e^{\theta t} \cdot X_{t} \right ) = e^{\theta t} \theta \mu dt + e^{\theta t} \sigma dW_{t} \\
+    \int_{0}^{t} d\left ( e^{\theta s} \cdot X_{s} \right ) = \int_{0}^{s} e^{\theta s} \theta \mu \, ds + \int_{0}^{s} e^{\theta s} \sigma dW_{s}
+\end{gather*}
+We can now evaluate each of these integrals. We begin by evaluating the deterministic integral in the middle of the SDE. We notice that $\theta \mu$ is a constants term, thus
+a part of it can be factored out of the integral. We also recall the rule for integrating exponental functions $\int e^{ax} \, dx = \frac{1}{a}e^{ax} + C$ and apply it.
+\begin{gather*}
+    \int_{0}^{s} e^{\theta s} \theta \mu \, ds = \mu \int_{0}^{s} e^{\theta s} \theta \, ds = \mu \bigg|_{0}^{s} \theta \frac{1}{\theta} e^{\theta s} = \mu \bigg|_{0}^{s} e^{\theta s}
+\end{gather*}
+Next we evaluate the integral from $0$ to time $s$, using the standard procedure for evaluating definite integrals.
+\begin{gather*}
+    \mu \bigg|_{0}^{s} e^{\theta s} = \mu \left ( e^{\theta s} - e^{\theta \cdot 0} \right ) = \mu \left ( e^{\theta s} - 1 \right )
+\end{gather*}
+Next, we need to solve two of our Itô Integrals. Let's solve the left-hand side of our SDE first. We will apply the fundemental theorem of calculus adapted to Itô integrals, which states
+that for a well-behaved process $Y_{t}$, the Itô Integral of the differential of that process $dY_{t}$ is described by: $\int_{0}^{t} dY_{s} = Y_{t} - Y_{0}$, we recoggnizee that
+$Y_{s} = e^{\theta s} X_{s}$, thus we can apply it to our
+left-hand side:
+\begin{gather*}
+    \int_{0}^{t} d\left ( e^{\theta s} \cdot X_{s} \right ) = e^{\theta t}X_{t} - e^{\theta \cdot 0}X_{0} = e^{\theta t}X_{t} - X_{0}
+\end{gather*}
+We cannot further simplify our stochastic integral over the Wiener Process, thus we leave it as is - which is fine, in our algorithmic trading strategy this will be fairly simple
+to compute and correctly account for. We combine everything and get the following:
+\begin{gather*}
+    \int_{0}^{t} d\left ( e^{\theta s} \cdot X_{s} \right ) = \int_{0}^{s} e^{\theta s} \theta \mu \, ds + \int_{0}^{s} e^{\theta s} \sigma dW_{s} \\
+    e^{\theta t}X_{t} - X_{0} = \mu (e^{\theta t} - 1) + \int_{0}^{s} e^{\theta s} \sigma dW_{s}
+\end{gather*}
+Next, we express the term $X_{t}$ which represents the value of the Ornstein Uhlenbeck process at time $t$, which is the final solution to the SDE.
+\begin{gather*}
+    e^{\theta t}X_{t} = X_{0} + \mu (e^{\theta t} - 1) + \int_{0}^{s} e^{\theta s} \sigma dW_{s} \\
+    X_{t} = \frac{1}{e^{\theta t}} X_{0} + \frac{1}{e^{\theta t}} \mu (e^{\theta t} - 1) + \frac{1}{e^{\theta t}} \int_{0}^{s} e^{\theta s} \sigma dW_{s}
+\end{gather*}
+We can now simplify each of these terms. $\frac{1}{e^{\theta t}} X_{0}$ will become $X_{0} e^{-\theta t}$. We continue simplifying, $\frac{1}{e^{\theta t}} \mu (e^{\theta t} - 1)
+= \frac{1}{e^{\theta t}} \left (\mu e^{\theta t} - \mu \right ) = \left (\mu - \mu e^{-\theta t} \right ) = \mu \left ( 1 - e^{-\theta t} \right )$. We recall the rule about factoring
+constants out of integrals, we can also do the reverse and factor a constant into an integral, while this is contraproductive most of the time, it can be used to simplify certain terms.
+Thus, $\frac{1}{e^{\theta t}} \int_{0}^{s} e^{\theta s} \sigma dW_{s} = \int_{0}^{s} \frac{1}{e^{\theta t}} e^{\theta s} \sigma dW_{s} = \int_{0}^{s} e^{-\theta t} e^{\theta s} \sigma dW_{s}
+= \int_{0}^{s} e^{\theta s -\theta t} \sigma dW_{s} = \int_{0}^{s} e^{-\theta (t - s)} \sigma dW_{s}$. Now that all of our terms have been simplified, we can combine them to form the
+final formal solution to the stochastic differential equation governing the Ornstein Uhlenbeck Process.
+\begin{gather*}
+    X_{t} = X_{0}e^{-\theta t} + \mu \left ( 1 - e^{-\theta t} \right ) + \int_{0}^{s} e^{-\theta (t - s)} \sigma dW_{s}
+\end{gather*}
+
+\subsection{Calibrating OU Process Parameters using OLS}
+
+\section{Unoptimized OU-based Trading Strategy}
+
+\section{Optimal Execution Region and OU Parameters}
 
 We define an Ornstein Uhlenbeck process with the following Stochastic Differential Equation and we have an analytical solution:
 \begin{gather*}
     dX_{t} = \theta(\mu - X_{t}) dt - \sigma dW_{t} \\
-    X_{t} = Y_{t} + \mu = \mu + e^{-\theta(t - s)}(X_{s} - \mu) + \sigma \int_{s}^{t} e^{-\theta(t - u)} dW_{u}
+    X_{t} = Y_{t} + \mu = \mu + e^{-\theta(t - s)}(X_{s} - \mu) + \sigma \int_{s}^{t} e^{-\theta(t - u)} \, dW_{u}
 \end{gather*}
 
 
@@ -429,9 +536,6 @@ We define an Ornstein Uhlenbeck process with the following Stochastic Differenti
 \begin{center}
     \includegraphics[scale=0.35]{./images/argb.png}
 \end{center}
-
-{ \Huge Pls hire me any internships pls }
-
 
 \section{Derivation of the Gradient for Non-linear Programming}
 
