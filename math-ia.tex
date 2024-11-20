@@ -577,6 +577,26 @@ We end up with the following discretization:
 
 \subsection{Calibrating OU Process Parameters using OLS}
 
+We start by defining a time series $X_{t}$, which contains the underlying dataset we're trying to fit the OU process to, in our case, this would be the spread between two equities.
+We need to estimate the parameters $\theta$ - mean reverting force, $\mu(t)$ - time-dependent mean function, and $\sigma$ - volatility of the noise.
+
+We can easily estimate the mean function $\hat \mu(t) = \beta t + \alpha$ by running a linear regression on our dataset. The slope of the result of this regression is $\beta$ and
+the intercept is $\alpha$.
+
+Next, to estimate the other parameters, we rearrange our time-discrete solution in terms of the changes between consecutive elements of the time series.
+\begin{gather*}
+    X_{t + 1} = X_{t} + \theta \left ( \mu(t) - X_{t} \right )+ \sigma \Delta W_{n} \\
+    X_{t + 1} - X_{t} = \theta \left ( \mu(t) - X_{t} \right )+ \sigma \Delta W_{n} \\
+    \Delta X_{t} = \theta \left ( \mu(t) - X_{t} \right )+ \sigma \Delta W_{n}
+\end{gather*}
+We need to fit our equation to the form $Y_{t} = \beta X_{t} + \alpha + \epsilon_{t}$, where $\epsilon_{t}$ represents the residuals of the OLS, this is the standard form of an OLS
+reression which we can then feed into our algorithm. We start by expanding the bracket to get the following:
+$\Delta X_{t} = \theta \mu(t) - \theta X_{t} + \sigma \Delta W_{n}$, notice how this is already starting to look like a standard OLS form, we just need to define $Y_{t}$.
+If we move the term $\theta \mu(t)$ to the other side (since we can pre-compute it), we can define $Y_{t} = \Delta X_{t} - \theta \mu(t)$, thus leaving us with:
+$Y_{t} = - \theta X_{t} + \sigma \Delta W_{n}$. Notice how there's no intercept term $\alpha$, in a perfect dataset, we would expect this intercept term to be zero, but since
+our data cannot be fully fit to the OU model, this would represent a type of error. We can now run the OLS regression.
+
+
 \section{Unoptimized OU-based Trading Strategy}
 
 \section{Optimal Execution Region and OU Parameters}
