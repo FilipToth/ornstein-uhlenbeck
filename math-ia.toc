@@ -1,0 +1,22 @@
+\contentsline {section}{\numberline {1}Brownian Motion and the Wiener Process}{2}{}%
+\contentsline {section}{\numberline {2}Ornstein-Uhlenbeck Process}{3}{}%
+\contentsline {subsection}{\numberline {2.1}Deriving a Mean Reversion Mechanism}{3}{}%
+\contentsline {subsection}{\numberline {2.2}Differentiating for the Mean-reverting Force}{4}{}%
+\contentsline {subsection}{\numberline {2.3}Full Naive Derivation of the OU Process}{6}{}%
+\contentsline {subsection}{\numberline {2.4}Formal Derivation of the OU Process}{7}{}%
+\contentsline {section}{\numberline {3}Long-term Equilibrium Cointegration in Equity Markets}{8}{}%
+\contentsline {subsection}{\numberline {3.1}Static Regression of Equity Time Series}{8}{}%
+\contentsline {subsection}{\numberline {3.2}Dickey Fuller Test}{9}{}%
+\contentsline {subsection}{\numberline {3.3}Augmented Dickey Fuller Test}{10}{}%
+\contentsline {subsection}{\numberline {3.4}Performing the Two-Step Engle Granger Test on Equity Prices}{11}{}%
+\contentsline {subsection}{\numberline {3.5}Engle Granger Residuals vs Equity Spreads}{13}{}%
+\contentsline {section}{\numberline {4}Fitting the Ornstein Uhlenbeck Process to our Data}{14}{}%
+\contentsline {subsection}{\numberline {4.1}Formal Analytical Solution to the OU SDE}{15}{}%
+\contentsline {subsection}{\numberline {4.2}Adjusting OU Deterministic Drift for Trend}{18}{}%
+\contentsline {subsection}{\numberline {4.3}Calibrating OU Process Parameters using OLS}{20}{}%
+\contentsline {subsection}{\numberline {4.4}Calibrating OU Process Parameters using OLS}{20}{}%
+\contentsline {section}{\numberline {5}Unoptimized OU-based Trading Strategy}{20}{}%
+\contentsline {section}{\numberline {6}Optimal Execution Region and OU Parameters}{20}{}%
+\contentsline {section}{\numberline {7}Ajne Street}{20}{}%
+\contentsline {section}{\numberline {8}Derivation of the Gradient for Non-linear Programming}{20}{}%
+\contentsline {section}{\numberline {9}Least Squares Regression for Mean-reverting Parameter}{21}{}%

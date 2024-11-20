@@ -61,6 +61,9 @@
     \end{center}
 \end{titlepage}
 
+\tableofcontents
+\newpage
+
 \begin{spacing}{2.0}
 \section{Brownian Motion and the Wiener Process}
 
@@ -480,16 +483,16 @@ $\mathcal{F}(s)$ would be $f(s) = e^{\theta t} \sigma$, note that this is consta
 and on the stochastic Wiener Process term.
 \begin{gather*}
     d\left ( e^{\theta t} \cdot X_{t} \right ) = e^{\theta t} \theta \mu dt + e^{\theta t} \sigma dW_{t} \\
-    \int_{0}^{t} d\left ( e^{\theta s} \cdot X_{s} \right ) = \int_{0}^{s} e^{\theta s} \theta \mu \, ds + \int_{0}^{s} e^{\theta s} \sigma dW_{s}
+    \int_{0}^{t} d\left ( e^{\theta s} \cdot X_{s} \right ) = \int_{0}^{t} e^{\theta s} \theta \mu \, ds + \int_{0}^{t} e^{\theta s} \sigma dW_{s}
 \end{gather*}
 We can now evaluate each of these integrals. We begin by evaluating the deterministic integral in the middle of the SDE. We notice that $\theta \mu$ is a constants term, thus
 a part of it can be factored out of the integral. We also recall the rule for integrating exponental functions $\int e^{ax} \, dx = \frac{1}{a}e^{ax} + C$ and apply it.
 \begin{gather*}
-    \int_{0}^{s} e^{\theta s} \theta \mu \, ds = \mu \int_{0}^{s} e^{\theta s} \theta \, ds = \mu \bigg|_{0}^{s} \theta \frac{1}{\theta} e^{\theta s} = \mu \bigg|_{0}^{s} e^{\theta s}
+    \int_{0}^{t} e^{\theta s} \theta \mu \, ds = \mu \int_{0}^{t} e^{\theta s} \theta \, ds = \mu \bigg|_{0}^{t} \theta \frac{1}{\theta} e^{\theta t} = \mu \bigg|_{0}^{t} e^{\theta t}
 \end{gather*}
 Next we evaluate the integral from $0$ to time $s$, using the standard procedure for evaluating definite integrals.
 \begin{gather*}
-    \mu \bigg|_{0}^{s} e^{\theta s} = \mu \left ( e^{\theta s} - e^{\theta \cdot 0} \right ) = \mu \left ( e^{\theta s} - 1 \right )
+    \mu \bigg|_{0}^{t} e^{\theta t} = \mu \left ( e^{\theta t} - e^{\theta \cdot 0} \right ) = \mu \left ( e^{\theta t} - 1 \right )
 \end{gather*}
 Next, we need to solve two of our Itô Integrals. Let's solve the left-hand side of our SDE first. We will apply the fundemental theorem of calculus adapted to Itô integrals, which states
 that for a well-behaved process $Y_{t}$, the Itô Integral of the differential of that process $dY_{t}$ is described by: $\int_{0}^{t} dY_{s} = Y_{t} - Y_{0}$, we recoggnizee that
@@ -501,36 +504,57 @@ left-hand side:
 We cannot further simplify our stochastic integral over the Wiener Process, thus we leave it as is - which is fine, in our algorithmic trading strategy this will be fairly simple
 to compute and correctly account for. We combine everything and get the following:
 \begin{gather*}
-    \int_{0}^{t} d\left ( e^{\theta s} \cdot X_{s} \right ) = \int_{0}^{s} e^{\theta s} \theta \mu \, ds + \int_{0}^{s} e^{\theta s} \sigma dW_{s} \\
-    e^{\theta t}X_{t} - X_{0} = \mu (e^{\theta t} - 1) + \int_{0}^{s} e^{\theta s} \sigma dW_{s}
+    \int_{0}^{t} d\left ( e^{\theta s} \cdot X_{s} \right ) = \int_{0}^{t} e^{\theta s} \theta \mu \, ds + \int_{0}^{t} e^{\theta s} \sigma dW_{s} \\
+    e^{\theta t}X_{t} - X_{0} = \mu (e^{\theta t} - 1) + \int_{0}^{t} e^{\theta s} \sigma dW_{s}
 \end{gather*}
 Next, we express the term $X_{t}$ which represents the value of the Ornstein Uhlenbeck process at time $t$, which is the final solution to the SDE.
 \begin{gather*}
-    e^{\theta t}X_{t} = X_{0} + \mu (e^{\theta t} - 1) + \int_{0}^{s} e^{\theta s} \sigma dW_{s} \\
-    X_{t} = \frac{1}{e^{\theta t}} X_{0} + \frac{1}{e^{\theta t}} \mu (e^{\theta t} - 1) + \frac{1}{e^{\theta t}} \int_{0}^{s} e^{\theta s} \sigma dW_{s}
+    e^{\theta t}X_{t} = X_{0} + \mu (e^{\theta t} - 1) + \int_{0}^{t} e^{\theta s} \sigma dW_{s} \\
+    X_{t} = \frac{1}{e^{\theta t}} X_{0} + \frac{1}{e^{\theta t}} \mu (e^{\theta t} - 1) + \frac{1}{e^{\theta t}} \int_{0}^{t} e^{\theta s} \sigma dW_{s}
 \end{gather*}
 We can now simplify each of these terms. $\frac{1}{e^{\theta t}} X_{0}$ will become $X_{0} e^{-\theta t}$. We continue simplifying, $\frac{1}{e^{\theta t}} \mu (e^{\theta t} - 1)
 = \frac{1}{e^{\theta t}} \left (\mu e^{\theta t} - \mu \right ) = \left (\mu - \mu e^{-\theta t} \right ) = \mu \left ( 1 - e^{-\theta t} \right )$. We recall the rule about factoring
 constants out of integrals, we can also do the reverse and factor a constant into an integral, while this is contraproductive most of the time, it can be used to simplify certain terms.
-Thus, $\frac{1}{e^{\theta t}} \int_{0}^{s} e^{\theta s} \sigma dW_{s} = \int_{0}^{s} \frac{1}{e^{\theta t}} e^{\theta s} \sigma dW_{s} = \int_{0}^{s} e^{-\theta t} e^{\theta s} \sigma dW_{s}
-= \int_{0}^{s} e^{\theta s -\theta t} \sigma dW_{s} = \int_{0}^{s} e^{-\theta (t - s)} \sigma dW_{s}$. Now that all of our terms have been simplified, we can combine them to form the
+Thus, $\frac{1}{e^{\theta t}} \int_{0}^{t} e^{\theta s} \sigma dW_{s} = \int_{0}^{t} \frac{1}{e^{\theta t}} e^{\theta s} \sigma dW_{s} = \int_{0}^{t} e^{-\theta t} e^{\theta s} \sigma dW_{s}
+= \int_{0}^{t} e^{\theta s -\theta t} \sigma dW_{s} = \int_{0}^{t} e^{-\theta (t - s)} \sigma dW_{s}$. Now that all of our terms have been simplified, we can combine them to form the
 final formal solution to the stochastic differential equation governing the Ornstein Uhlenbeck Process.
 \begin{gather*}
-    X_{t} = X_{0}e^{-\theta t} + \mu \left ( 1 - e^{-\theta t} \right ) + \int_{0}^{s} e^{-\theta (t - s)} \sigma dW_{s}
+    X_{t} = X_{0}e^{-\theta t} + \mu \left ( 1 - e^{-\theta t} \right ) + \int_{0}^{t} e^{-\theta (t - s)} \sigma dW_{s}
 \end{gather*}
+
+\subsection{Adjusting OU Deterministic Drift for Trend}
+
+Recall the graph of the sample paths generated by the Ornstein Uhlenbeck process, you can notice that the mean is static, the process always reverts back to a constant mean. But Looking
+at the equity spreads between most of our cointegration pairs, we notice that the spread is actually growing, while still adhering to the Ornstein Uhlenbeck Process, we know this because
+we checked for the stationarity of regression residuals of the spreads. What if we simply introduce a function of time representing a changing mean? We can represent this with the following
+function $\mu(t)$, and we can directly substitute it to the SDE, but we still have to do some work to properly find a general solution.
+\begin{gather*}
+    dX_{t} = \theta \left ( \mu(t) - X_{t} \right )dt + \sigma dW_{t}
+\end{gather*}
+We can't use the general solution we found in the previous subchapter directly, because we assumed that $\mu$ is a constant, which is not true. Previously, we defined an integral for
+finding the general solution to the deterministic part of the SDE and we simplified it. We can no longer do this since we would like to keep things general and assume that $\mu(t)$ is
+some function and we don't have any further information about it. Thus, we can change our integral over the deterministic term:
+\begin{gather*}
+    \int_{0}^{t} e^{\theta s} \theta \mu \, ds \Longrightarrow \int_{0}^{t} e^{\theta s} \theta \mu(s) \, ds
+\end{gather*}
+Recall that we also had to divide by our integrating factor $e^{-\theta t}$, we also have to apply the operation here.
+\begin{gather*}
+    e^{-\theta t} \int_{0}^{t} e^{\theta s} \theta \mu(s) \, ds = \int_{0}^{t} e^{\theta s} e^{-\theta t} \theta \mu(s) \, ds
+    = \int_{0}^{t} e^{\theta (s - t)} \theta \mu(s) \, ds
+\end{gather*}
+
+We can now substitute this new integral in place of the deterministic part of the general solution to the SDE.
+\begin{gather*}
+    X_{t} = X_{0}e^{-\theta t} + \int_{0}^{t} e^{\theta (s - t)} \theta \mu(s) \, ds + \int_{0}^{t} e^{-\theta (t - s)} \sigma dW_{s}
+\end{gather*}
+
+\subsection{Calibrating OU Process Parameters using OLS}
 
 \subsection{Calibrating OU Process Parameters using OLS}
 
 \section{Unoptimized OU-based Trading Strategy}
 
 \section{Optimal Execution Region and OU Parameters}
-
-We define an Ornstein Uhlenbeck process with the following Stochastic Differential Equation and we have an analytical solution:
-\begin{gather*}
-    dX_{t} = \theta(\mu - X_{t}) dt - \sigma dW_{t} \\
-    X_{t} = Y_{t} + \mu = \mu + e^{-\theta(t - s)}(X_{s} - \mu) + \sigma \int_{s}^{t} e^{-\theta(t - u)} \, dW_{u}
-\end{gather*}
-
 
 \section{Ajne Street}
 \begin{center}
