@@ -13,10 +13,7 @@
 \contentsline {section}{\numberline {4}Fitting the Ornstein Uhlenbeck Process to our Data}{14}{}%
 \contentsline {subsection}{\numberline {4.1}Formal Analytical Solution to the OU SDE}{15}{}%
 \contentsline {subsection}{\numberline {4.2}Adjusting OU Deterministic Drift for Trend}{18}{}%
-\contentsline {subsection}{\numberline {4.3}Calibrating OU Process Parameters using OLS}{20}{}%
-\contentsline {subsection}{\numberline {4.4}Calibrating OU Process Parameters using OLS}{20}{}%
-\contentsline {section}{\numberline {5}Unoptimized OU-based Trading Strategy}{20}{}%
-\contentsline {section}{\numberline {6}Optimal Execution Region and OU Parameters}{20}{}%
-\contentsline {section}{\numberline {7}Ajne Street}{20}{}%
-\contentsline {section}{\numberline {8}Derivation of the Gradient for Non-linear Programming}{20}{}%
-\contentsline {section}{\numberline {9}Least Squares Regression for Mean-reverting Parameter}{21}{}%
+\contentsline {subsection}{\numberline {4.3}Time Discretization Using the Euler Maruyama Method}{20}{}%
+\contentsline {subsection}{\numberline {4.4}Calibrating OU Process Parameters using OLS}{21}{}%
+\contentsline {section}{\numberline {5}Unoptimized OU-based Trading Strategy}{21}{}%
+\contentsline {section}{\numberline {6}Optimal Execution Region and OU Parameters}{21}{}%

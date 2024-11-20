@@ -548,40 +548,38 @@ We can now substitute this new integral in place of the deterministic part of th
     X_{t} = X_{0}e^{-\theta t} + \int_{0}^{t} e^{\theta (s - t)} \theta \mu(s) \, ds + \int_{0}^{t} e^{-\theta (t - s)} \sigma dW_{s}
 \end{gather*}
 
-\subsection{Calibrating OU Process Parameters using OLS}
+\subsection{Time Discretization Using the Euler Maruyama Method}
+
+% source for time discretization? https://www.math.kit.edu/ianm3/lehre/nummathfin2012w/media/euler_maruyama.pdf
+
+We can define any Itô Process uisng the following generalization of a stochastic differenial equation:
+\begin{gather*}
+    dX_{t} = f(t, X_{t})dt + g(t, X_{t})dW_{t}
+\end{gather*}
+Where $f(t, X_{t})$ represents the deterministic drift term and $g(t, X_{t})$ represents the stochastic diffusion term, which you can think of as a modifier on the brownian motion.
+Looking at the SDE describing the Ornstein Uhlenbeck Process with a non-constant time-dependent mean $dX_{t} = \theta \left ( \mu(t) - X_{t} \right )dt + \sigma dW_{t}$, we notice that
+we can formulate a $f(t, X_{t})$ function and a $g(t, X_{t})$ function such thate the SDE conforms to the before-mentioned generalization.
+\begin{gather*}
+    f(t, X_{t}) = \theta \left ( \mu(t) - X_{t} \right ) \\
+    g(t, X_{t}) = \sigma
+\end{gather*}
+Applying the Euler Maruyama Method for discretization, we get the following time-discrete approximation of the OU SDE:
+\begin{gather*}
+    X_{t + 1} = X_{t} + \tau f(t, X_{t}) + g(t, X_{t}) \Delta W_{n} \\
+    X_{t + 1} = X_{t} + \tau \theta \left ( \mu(t) - X_{t} \right )+ \sigma \Delta W_{n}
+\end{gather*}
+We define $\tau$ to be a small increment (esentially the scale of our time series $X_{t}$), we also define $\Delta W_{t}$ as an increment of the Wiener process over a discrete
+time-increment interval $[t, t + 1]$, such that $\Delta W_{t} = W_{t - 1} + W_{t} \sim \mathcal{N}(0, \tau)$. In our model, we consider $\tau = 1$, so we can disregard it.
+We end up with the following discretization:
+\begin{gather*}
+    X_{t + 1} = X_{t} + \theta \left ( \mu(t) - X_{t} \right )+ \sigma \Delta W_{n}
+\end{gather*}
 
 \subsection{Calibrating OU Process Parameters using OLS}
 
 \section{Unoptimized OU-based Trading Strategy}
 
 \section{Optimal Execution Region and OU Parameters}
-
-\section{Ajne Street}
-\begin{center}
-    \includegraphics[scale=0.35]{./images/argb.png}
-\end{center}
-
-\section{Derivation of the Gradient for Non-linear Programming}
-
-We optimize for the variable $\theta$. We get following base function.
-\begin{gather*}
-    X_{t + 1} = X_{t} + -\theta(X_{t} - \mu)e + \mathcal{N}(0, \sigma^{2}) \\
-\end{gather*}
-We must get the objective function which is thre mean squared error in terms of $\theta$.
-We consider the the values to be in a pre-computed list $\mathcal{X}$, where $\mathcal{X}_{1}, \mathcal{X}_{2}, \dots, \mathcal{X}_{n} \in \mathcal{X}$
-\begin{gather*}
-    MSE = \frac{1}{T} \sum_{i = 1}^{T} \mathcal{X}_{i} = \frac{1}{T} \sum_{i = 1}^{T} X_{i} + -\theta(X_{t} - \mu)e + \mathcal{N}(0, \sigma^{2})
-\end{gather*}
-
-\section{Least Squares Regression for Mean-reverting Parameter}
-\begin{gather*}
-    \mathcal{X}_{t + 1} = \mathcal{X}_{t} - \theta (X_{t} - \mu)e + \mathcal{N}(0, \sigma^{2}) \\
-    \mathcal{X}_{t + 1} - \mathcal{X}_{t} - \mathcal{N}(0, \sigma^{2}) = -\theta (X_{t} - \mu)e  \\
-    \frac{- \mathcal{X}_{t + 1} + \mathcal{X}_{t} + \mathcal{N}(0, \sigma^{2})}{e(X_{t} - \mu)} = \theta
-\end{gather*}
-
-For now, we can disregard the normally-distributed Wiener process term.
-Have to use Ito's Lemma.
 
 \end{spacing}
 \end{document}
