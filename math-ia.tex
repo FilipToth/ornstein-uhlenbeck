@@ -9,6 +9,8 @@
 \usepackage{pgfplots} % for plotting function
 \usepackage{booktabs} % for tables
 \usepackage{float}
+\usepackage{algorithm} % for algorithm notation
+\usepackage{algpseudocode}
 
 \usepackage[a4paper, margin=3.17cm]{geometry}
 
@@ -434,6 +436,10 @@ OLS parameter estimation is frequently used in Quant Finance, despite it's obvio
 
 \subsection{Formal Analytical Solution to the OU SDE}
 
+\textbf{This might not be in the final IA as I've found a way to do this with just the discrete-time solution, making this section obsolete. Might still have to use it
+when optimizing the tresholds (discussed later)}
+\\
+
 We start with the OU SDE we derived in a previously, and we expand the deterministic drift term.
 \begin{gather*}
     dX_{t} = \theta (\mu - X_{t})dt + \sigma dW_{t} \\
@@ -628,19 +634,66 @@ explanation of the shorting process. It's also worthwhile to mention that shorti
 
 \subsection{Defining our Straregy}
 
-We will backtest two simple strategies that leverage the Ornstein Uhlenbeck Process. The first one focuses on calculating the mean reverting force $\theta$, which acts as a proxy
-for how far the current spread has deviated from the long-term mean, this suggests higher pressure to revert back to its mean. Thus, when $\theta$ is over a predefined treshold, we
+We will backtest one simple strategy that leverage the Ornstein Uhlenbeck Process. The strategy focuses on calculating the mean reverting force $\theta (\mu(t) - X_{t})$, which acts as a proxy
+for how far the current spread has deviated from the long-term mean, this suggests higher pressure to revert back to its mean. Thus, when $\theta(\mu(t) - X_{t})$ is over a predefined treshold, we
 fire a signal. Then, if the current spread is above the mean, we bet on the spread reverting, thus open a short position on $A$ and open a long position on $B$. If the current spread
 is below the mean, we open a long position on $B$ and a short position on $A$. When the price of over the treshold again (just in the opposite direction), we liquidate our long
-and short positions. The second strategy is very similar, but instead of using $\theta$, we simply fire our signal when the spread deviates from the mean by a deviation that is greater
-(or lesser) than some pre-defined treshold. In both of these strategies, we use a long-short position to isolate the market effect, thus become market neutral, i.e. our position will
+and short positions. In both of these strategies, we use a long-short position to isolate the market effect, thus become market neutral, i.e. our position will
 not be affected by the directional moves of the market. This is called statistical arbitrage and is one of the few strategies to generate returns that are uncorrelated to the market.
 
 \subsection{Backtest with Unoptimized Tresholds}
 
 We look at the prices of 'AMGN' and 'VOD' between January 1st 2014 and January 1st 2024. We define a training dataset (trainset) and a testing dataset (testset), with the trainset consiting
 of $1450$ trading days and the testset of the remaining $1066$ trading days of the 10 year period. The trainset will be used to fit the Ornstein Uhlenbeck Process and estimate process
-parameters and the testset will be used to actually perform the backtest and see how our strategy performs.
+parameters and the testset will be used to actually perform the backtest and see how our strategy performs. We begin by fitting an OU process on our trainset, thus getting parameters such
+as the mean function $\mu(t) = \beta x + \alpha$, $\theta$, and the Wiener variance $\sigma^{2}$. For our trainset, we find out that:
+\begin{gather*}
+    \mu(t) = 0.05933273399681959t + 92.3886877399938 \\
+    \theta = 0.022943374462635356 \\
+    \sigma = 2.3433270992078366
+\end{gather*}
+Now let's talk about how we actually perform the backtest. We iterate over our testset (go over each value of the time series sequentially, $X_{t}, X_{t + 1}, \dots$), at each of these steps
+we calculate the mean-reverting force $F = \theta(\mu(t) - X_{t})$. The mean reverting force is set greater than some treshold $\tau_{\text{up}}$ or lower than some treshold $\tau_{\text{down}}$,
+we fire a signal. This just means that we execute our trade, if $F > \tau_{\text{up}}$, we open a long position on the spread and liquidate any short positions on the spread. If
+$-F > \tau_{\text{down}}$, we open a short position on the spread and liquidate any long positions on the spread. We can write this down in the followin algorithm:
+
+\begin{algorithm}
+    \caption{Backtesting algorithm}
+    \begin{algorithmic}
+        \For{$X_{t}$ \textbf{in} \texttt{testset}}
+            \If{$F > \tau_{\text{up}}$}
+                \State \texttt{exit\_short}()
+                \State \texttt{open\_long}()
+            \ElsIf{$-F > \tau_{\text{down}}$}
+                \State \texttt{exit\_long}()
+                \State \texttt{open\_short}()
+            \EndIf
+        \EndFor
+    \end{algorithmic}
+\end{algorithm}
+
+For reference, let's graph the mean reverting force $\theta (\mu(t) - X_{t})$ against the quity spreads, we should see an inversely-proportional relationship, such that when the spread
+gets greater, the mean reverting force should decrease (into the negative) and when the spread gets into the negative, the mean reverting force should increase.
+\begin{center}
+    \includegraphics[scale=0.32]{./images/mean_reverting_force.png}
+\end{center}
+Based on this graph, we can estimate the resholds for our algorithm. As an example, I set $\tau_{\text{up}} = \tau_{\text{down}} = 0.2$, such that it would hit most of the peaks. running
+our backtesting algorithm, we can now plot our positions, where a red line indicates shorting the spread and a green line indicates longing the spread.
+\begin{center}
+    \includegraphics[scale=0.33]{./images/backtest_positions_1.png}
+\end{center}
+We can also plot the total portfolio value of our strategy over time (starting with a porfolio value $p=100$).
+\begin{center}
+    \includegraphics[scale=0.33]{./images/backtest_portfolio_value_1.png}
+\end{center}
+In the end, we observe that our final portfolio value is around $203.10593563249694$, which indicates a $203.10\%$ increase in portfolio value over a time period of $1066$ trading days.
+Given $252$ trading days in a given year, we've had our portfolio for $4.23$ years. Let's calulate our CAGR (Compound average growth rate).
+\begin{gather*}
+    \text{CAGR} = \left ( \frac{V_{\text{final}}}{V_{\text{begin}}} \right )^{\frac{1}{t}} - 1 = \left ( \frac{203.10}{100} \right )^{\frac{1}{4.23}} - 1 = 18.23 \%
+\end{gather*}
+We can see that our CAGR is around $18.23 \%$, which is absolutely top-of-the-line even when compared to some of the best hedge-fund standards. This is even more impressive considering
+that this is a statistical arbitrage strategy that isolates the market effect, thus is esentially "recession-proof". For reference, the S\&P-500 returned an average CAGR of just
+$11.24 \%$ over the same time period, and experienced a very strong rally in late 2020, the S\&P usually averages around 8\% per year.
 
 \section{Optimal Execution Region and OU Parameters}
 
