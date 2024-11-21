@@ -15,5 +15,8 @@
 \contentsline {subsection}{\numberline {4.2}Adjusting OU Deterministic Drift for Trend}{18}{}%
 \contentsline {subsection}{\numberline {4.3}Time Discretization Using the Euler Maruyama Method}{20}{}%
 \contentsline {subsection}{\numberline {4.4}Calibrating OU Process Parameters using OLS}{21}{}%
-\contentsline {section}{\numberline {5}Unoptimized OU-based Trading Strategy}{21}{}%
-\contentsline {section}{\numberline {6}Optimal Execution Region and OU Parameters}{21}{}%
+\contentsline {section}{\numberline {5}Unoptimized OU-based Trading Strategy}{22}{}%
+\contentsline {subsection}{\numberline {5.1}A Bit of Background: Long Short}{23}{}%
+\contentsline {subsection}{\numberline {5.2}Defining our Straregy}{23}{}%
+\contentsline {subsection}{\numberline {5.3}Backtest with Unoptimized Tresholds}{24}{}%
+\contentsline {section}{\numberline {6}Optimal Execution Region and OU Parameters}{24}{}%

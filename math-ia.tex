@@ -590,14 +590,57 @@ Next, to estimate the other parameters, we rearrange our time-discrete solution 
     \Delta X_{t} = \theta \left ( \mu(t) - X_{t} \right )+ \sigma \Delta W_{n}
 \end{gather*}
 We need to fit our equation to the form $Y_{t} = \beta X_{t} + \alpha + \epsilon_{t}$, where $\epsilon_{t}$ represents the residuals of the OLS, this is the standard form of an OLS
-reression which we can then feed into our algorithm. We start by expanding the bracket to get the following:
-$\Delta X_{t} = \theta \mu(t) - \theta X_{t} + \sigma \Delta W_{n}$, notice how this is already starting to look like a standard OLS form, we just need to define $Y_{t}$.
-If we move the term $\theta \mu(t)$ to the other side (since we can pre-compute it), we can define $Y_{t} = \Delta X_{t} - \theta \mu(t)$, thus leaving us with:
-$Y_{t} = - \theta X_{t} + \sigma \Delta W_{n}$. Notice how there's no intercept term $\alpha$, in a perfect dataset, we would expect this intercept term to be zero, but since
-our data cannot be fully fit to the OU model, this would represent a type of error. We can now run the OLS regression.
+reression which we can then feed into our algorithm. We start by preprocessing the time series $X_{t}$, to a singular form that will match the term $\theta X'_{t}$, we define the
+time series $X'_{t} = \mu(t) - X_{t}$, we will use this new transformed time series in place of $X_{t}$ in our OLS regression because it matches up with the regression equation form.
+Thus, we defne a regression $Y_{t} = \beta X'_{t} + \epsilon_{t}$, where intuitively $Y_{t} = \Delta X_{t}$. Now, the only parameter left is $\sigma$, which we obtain by calculating
+the variance of the residuals, $\sigma^{2} = \text{Var} \left ( \epsilon_{t} \right )$, as I've mentioned previously $\epsilon_{t}$ is the result of the Wiener process, thus getting
+the variance of this time series will correspond to the variance of the Wiener process.
 
+After performing the OLS (through the 'statsmodels' package) and
+calibrating the OU process on the time series of spreads between 'NASDAQ: AMGN' and 'NASDAQ: VOD', we get the following parameters:
+\begin{gather*}
+    mu(t) = 0.06594474095969069t + 89.97341936600293 \\
+    \theta = 0.017667438720532103 \\
+    \sigma = 2.8934948104163873
+\end{gather*}
+We can now plot a sample path along our calibrated Ornstein Uhlenbeck Process (with the above parameters) and the spreads between 'AMGN' and 'VOD', and visually confirm that they
+line up quite nicely:
+\begin{center}
+    \includegraphics[scale=0.35]{./images/calibrated_ou_sample_path_amgn_vod.png}
+\end{center}
 
 \section{Unoptimized OU-based Trading Strategy}
+
+Since we have a calibrated mean-reverting process, we can now leverage this to create an algorithmic trading strategy capturing the mean-reverting mechanism of the spread between two
+equities - we will look at 'AMGN' and 'VOD' for now, but this can be extended to any pair of equities (and even multiple equities through a more advanced straregy). The idea is pretty
+simple, bet that the spread between them will rever to its long-term mean, but how exactly do we do that?
+
+\subsection{A Bit of Background: Long Short}
+
+How exactly do we capture the spread between two equities? Consider a spread between two stocks $A_{t} - B_{t}$, if the spread increases, this means that stock $A$ has outperformed stock
+$B$, but if the spread decreases, stock $B$ has outperformed stock $A$. Thus, to bet that the spread will increase, we open a long position on stock $A$ and open a short position on
+stock $B$, conversely, if we want to bet on the spread decreasing, we open a long position on stock $B$ and open a short position on stock $A$. But what is a long and short position?
+A long position esentially means holding a stock, i.e. the classic way most people think about investing, you hold a stock expecting the price to increase, after which you exit your
+position. When short-selling a stock however, we aim to profit from a decrease in share price. The process usually goes something like this: you borrow a stock (usually from a broker),
+then you sell it on the open market, after the price falls, you buy back the stock and get to keep the difference (since the price has fallen), note that this is a heavily oversimplified
+explanation of the shorting process. It's also worthwhile to mention that shorting a security poses a lot more risk than longing a security, since it technically has unlimited downside
+(since the stock price can theoretically rise to infinity).
+
+\subsection{Defining our Straregy}
+
+We will backtest two simple strategies that leverage the Ornstein Uhlenbeck Process. The first one focuses on calculating the mean reverting force $\theta$, which acts as a proxy
+for how far the current spread has deviated from the long-term mean, this suggests higher pressure to revert back to its mean. Thus, when $\theta$ is over a predefined treshold, we
+fire a signal. Then, if the current spread is above the mean, we bet on the spread reverting, thus open a short position on $A$ and open a long position on $B$. If the current spread
+is below the mean, we open a long position on $B$ and a short position on $A$. When the price of over the treshold again (just in the opposite direction), we liquidate our long
+and short positions. The second strategy is very similar, but instead of using $\theta$, we simply fire our signal when the spread deviates from the mean by a deviation that is greater
+(or lesser) than some pre-defined treshold. In both of these strategies, we use a long-short position to isolate the market effect, thus become market neutral, i.e. our position will
+not be affected by the directional moves of the market. This is called statistical arbitrage and is one of the few strategies to generate returns that are uncorrelated to the market.
+
+\subsection{Backtest with Unoptimized Tresholds}
+
+We look at the prices of 'AMGN' and 'VOD' between January 1st 2014 and January 1st 2024. We define a training dataset (trainset) and a testing dataset (testset), with the trainset consiting
+of $1450$ trading days and the testset of the remaining $1066$ trading days of the 10 year period. The trainset will be used to fit the Ornstein Uhlenbeck Process and estimate process
+parameters and the testset will be used to actually perform the backtest and see how our strategy performs.
 
 \section{Optimal Execution Region and OU Parameters}
 
