@@ -22,3 +22,4 @@
 \contentsline {section}{\numberline {6}Optimizations and Model Improvements}{27}{}%
 \contentsline {subsection}{\numberline {6.1}Simple Moving Average}{27}{}%
 \contentsline {subsection}{\numberline {6.2}Optimizing Signals for Local Extrema}{28}{}%
+\contentsline {section}{\numberline {7}Appendix}{29}{}%

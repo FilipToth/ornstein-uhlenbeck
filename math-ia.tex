@@ -6,6 +6,7 @@
 \usepackage{amsfonts} % math fonts
 \usepackage{graphicx} % for images
 \usepackage{listings} % for code blocks
+\usepackage{color}    % for colored code
 \usepackage{pgfplots} % for plotting function
 \usepackage{booktabs} % for tables
 \usepackage{float}
@@ -53,7 +54,7 @@
     \vspace*{\fill}
     \vspace*{-4cm}
     \begin{center}
-        \huge \textbf { Ornstein Uhlenbeck Process Statistical Arbitrage and Cointegration on Equity Markets } \\
+        \huge \textbf { Ornstein Uhlenbeck Process Statistical Arbitrage on Cointegrated AR(1) Equity Pairs } \\
         \vspace{0.5cm}
         \Large \textit { by Filip Toth }
     \end{center}
@@ -718,6 +719,574 @@ Where $n$ is the sample size for the SMA. Esentially, the number of time frames 
 You can see that the 150 day SMA captures the dynamic nature of spreads a little better, while still not being perfect.
 
 \subsection{Optimizing Signals for Local Extrema}
+
+We intuitively note the fact that the most optimal entry and exit points (signal points) in a stat-arb strategy focusing OU oscillations in equity spreads are local extrema points of
+the non-continuous price function.
+
+\newpage
+
+\section{Appendix}
+
+\begin{center}
+    \includegraphics[scale=0.40]{./images/full_cointegration_heatmap.png}
+\end{center}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Java,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\singlespacing
+\lstset{language=Python}
+
+Please note that imports might not mach in all of these, since they were used in a jupyter notebook environment.
+
+Code for generating a sample Wiener process:
+
+\begin{lstlisting}
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import numpy as np
+
+NUM_PATHS = 10
+SAMPLES = 1000
+
+MU = 0
+SIGMA = 1
+
+rng = np.random.default_rng()
+
+def compute_wiener() -> list[float]:
+    value = 0
+    wiener = []
+
+    for _ in range(SAMPLES):
+        s = rng.normal(MU, SIGMA)
+        value += s
+
+        wiener.append(value)
+
+    return wiener
+
+
+df_data = {}
+for i in range(NUM_PATHS):
+    path = compute_wiener()
+    df_data[f'WPath {i}'] = path
+
+plt.figure(figsize=(10, 7))
+
+data = pd.DataFrame(df_data)
+sns.lineplot(data=data)
+
+plt.legend([], [], frameon=False)
+plt.show()
+\end{lstlisting}
+
+Code for generating a sample Ornstein Uhlenbeck process:
+
+\begin{lstlisting}
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import numpy as np
+
+NUM_PATHS = 2
+SAMPLES = 200
+THETA = 0.2
+MEAN = 0
+
+MU = 0
+SIGMA = 1
+
+rng = np.random.default_rng()
+
+def compute_wiener() -> list[float]:
+    value = 0
+    wiener = []
+
+    for _ in range(SAMPLES):
+        mean_rev_term = -THETA * (value - MEAN)
+        s = mean_rev_term + rng.normal(MU, SIGMA)
+        value += s
+
+        wiener.append(value)
+
+    return wiener
+
+
+df_data = {}
+for i in range(NUM_PATHS):
+    path = compute_wiener()
+    df_data[f'WPath {i}'] = path
+
+data = pd.DataFrame(df_data)
+
+long_form = pd.melt(data.reset_index(), id_vars='index', var_name='Path', value_name='Value')
+long_form.rename(columns={'index': 'Time'}, inplace=True)
+
+plt.figure(figsize=(10, 7))
+sns.lineplot(data=long_form, x='Time', y='Value', hue='Path')
+
+plt.legend([], [], frameon=False)
+plt.show()
+\end{lstlisting}
+
+Code for performing an OLS regression on residuals for the two-step engle granger test:
+
+\begin{lstlisting}
+import pandas as pd
+import seaborn as sns
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+
+ko = pd.read_pickle('../data/ko.pkl')
+pep = pd.read_pickle('../data/pep.pkl')
+
+def regression_residuals(s1: pd.DataFrame, s2: pd.DataFrame) -> pd.DataFrame:
+    x = s1[0]
+    y = s2[0]
+
+    # add a constant term
+    x = sm.add_constant(x)
+
+    model = sm.OLS(y, x)
+    res = model.fit()
+
+    return res.resid
+
+
+residuals = regression_residuals(ko, pep)
+
+print(residuals)
+
+sns.lineplot(residuals)
+plt.show()
+\end{lstlisting}
+
+Performing the ADF Test:
+
+\begin{lstlisting}
+# performs the two step engle granger test on all pairs from the NASDAQ 100
+
+import os
+from tqdm.notebook import tqdm
+from statsmodels.tsa.stattools import adfuller
+
+DATA_BASE = '../data/nasdaq/'
+unprobed_files = os.listdir(DATA_BASE)
+
+# only include mature companies,
+# also makes OLS simpler
+
+files = []
+for file in unprobed_files:
+    file_path = os.path.join(DATA_BASE, file)
+    df = pd.read_pickle(file_path)
+
+    prices = df[0]
+    if len(prices) != 2516:
+        continue
+
+    files.append(file)
+
+p_values = {}
+for i in tqdm(range(len(files)), desc="Running ADF Test"):
+    base_file = files[i]
+    base_file_path = os.path.join(DATA_BASE, base_file)
+    base_df = pd.read_pickle(base_file_path)
+    base_ticker = base_file.split('.')[0]
+
+    base_p_values = []
+    for j in range(len(files)):
+        aux_file = files[j]
+        aux_file_path = os.path.join(DATA_BASE, aux_file)
+        aux_df = pd.read_pickle(aux_file_path)
+
+        try:
+            residuals = regression_residuals(base_df, aux_df)
+            adf = adfuller(residuals)
+            p_value = adf[1]
+        except:
+            print(f'error on base: {i}, aux: {j}')
+            p_value = 1
+
+        base_p_values.append(p_value)
+
+    p_values[base_ticker] = base_p_values
+
+# show sns heatmap
+heatmap_index = list(map(lambda f: f.split('.')[0], files))
+
+heatmap_df = pd.DataFrame(p_values, index=heatmap_index)
+heatmap_df.to_pickle('../data/adf.pkl')
+\end{lstlisting}
+
+Code for performing a manually-picked treshold backtest:
+
+\begin{lstlisting}
+import os
+import pandas as pd
+import seaborn as sns
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+
+# We define a backtesting method, that takes
+# long-short tresholds and performs a backtest
+# this is an oversimplified model that doesn't
+# factor in the parameters of the underlying OU
+# process and simply trades off arbitrarily
+# defined tresholds, this follows an unoptimized
+# P/L, which we will later optimize for risk
+# appetite or optimality
+
+TRAIN_SET_END = 1450
+DATA_BASE = '../data/nasdaq/'
+TICKER_BASE = 'AMGN'
+TICKER_AUX = 'VOD'
+
+base_path = os.path.join(DATA_BASE, TICKER_BASE + '.pkl')
+aux_path = os.path.join(DATA_BASE, TICKER_AUX + '.pkl')
+
+base = pd.read_pickle(base_path)
+aux = pd.read_pickle(aux_path)
+spreads = base - aux
+
+def backtest(treshold_down: float, treshold_up: float):
+    train_set_spreads = spreads[0:TRAIN_SET_END]
+
+    test_set_spreads = spreads[TRAIN_SET_END:]
+    test_set_len = len(test_set_spreads)
+
+    # perform OLS fitting to X_{t} = \beta Y_{t} + \alpha
+    x = list(range(len(train_set_spreads)))
+    y = train_set_spreads[0]
+
+    x = sm.add_constant(x)
+    model = sm.OLS(y, x)
+    res = model.fit()
+
+    slope = res.params['x1']
+    intercept = res.params['const']
+
+    # perform backtest trading off tresholds
+    total_value = 100
+    portfolio_values = []
+
+    entered_long = False
+    long_entrance_price = 0
+
+    entered_short = False
+    short_entrance_price = 0
+
+    enters_long = []
+    enters_short = []
+
+    for i in range(test_set_len):
+        value = test_set_spreads.iloc[i, 0]
+
+        real_time = TRAIN_SET_END + i
+        pred_value = intercept + (slope * real_time)
+
+        if pred_value + treshold_up < value:
+            # End long position on spread
+            if entered_long:
+                entered_long = False
+                growth = (value - long_entrance_price) / long_entrance_price
+                total_value *= 1 + growth
+                long_entrance_price = 0
+
+                print(f'exiting long with growth: {growth * 100}%, at: {value}, total_value: {total_value}')
+
+            # short spread
+            if not entered_short:
+                entered_short = True
+                short_entrance_price = value
+
+                enters_short.append(i)
+                print(f'entering short at: {value}')
+
+        elif pred_value + treshold_down > value:
+            # End short position on spread
+            if entered_short:
+                entered_short = False
+                growth = (short_entrance_price - value) / value
+                total_value *= 1 + growth
+                short_entrance_price = 0
+
+                print(f'exiting short with growth: {growth * 100}%, at: {value}, total_value: {total_value}')
+
+            # long-spread
+            if not entered_long:
+                entered_long = True
+                long_entrance_price = value
+
+                enters_long.append(i)
+                print(f'entering long at: {value}')
+
+        portfolio_values.append(total_value)
+
+    print(f'total startegy value: {total_value}')
+    return portfolio_values, enters_long, enters_short, slope, intercept
+
+
+TRADE_DOWN = -10
+TRADE_UP = 6
+
+portfolio, long_entrances, short_entrances, total_slope, total_intercept = backtest(TRADE_DOWN, TRADE_UP)
+portfolio_df = pd.DataFrame({
+    'time': range(len(portfolio)),
+    'portfolio_value': portfolio
+})
+
+plt.title('Manually-picked Treshold Trade Backtest on AMGN/VOD Spreads')
+sns.lineplot(data=portfolio_df, x='time', y='portfolio_value')
+plt.show()
+\end{lstlisting}
+
+Code for plotting model tresholds:
+
+\begin{lstlisting}
+spreads = spreads[TRAIN_SET_END:]
+print(len(spreads))
+
+x = range(len(spreads))
+spreads_df = pd.DataFrame({
+    'x': x,
+    'y': spreads[0]
+})
+
+plt.figure(figsize=(19, 14))
+
+ax = sns.lineplot(data=spreads_df, x='x', y='y')
+
+# Add long-short tresholds
+y_down = [((p_x + TRAIN_SET_END) * total_slope) + total_intercept + TRADE_DOWN for p_x in x]
+y_reg = [((p_x + TRAIN_SET_END) * total_slope) + total_intercept for p_x in x]
+y_up = [((p_x + TRAIN_SET_END) * total_slope) + total_intercept + TRADE_UP for p_x in x]
+
+tresholds_df = pd.DataFrame({
+    'x': x,
+    'y_down': y_down,
+    'y_reg': y_reg,
+    'y_up': y_up
+})
+
+sns.lineplot(data=tresholds_df, x='x', y='y_down', color='green', linewidth=2.5)
+sns.lineplot(data=tresholds_df, x='x', y='y_reg', color='blue', linewidth=2.5)
+sns.lineplot(data=tresholds_df, x='x', y='y_up', color='red', linewidth=2.5)
+
+# Add trade entrances and exits
+long_x = []
+long_y = []
+
+short_x = []
+short_y = []
+
+for x in long_entrances:
+    y = spreads_df.iloc[x, 1]
+    long_x.append(x)
+    long_y.append(y)
+
+for x in short_entrances:
+    y = spreads_df.iloc[x, 1]
+    short_x.append(x)
+    short_y.append(y)
+
+long_df = pd.DataFrame({
+    'x': long_x,
+    'y': long_y
+})
+
+short_df = pd.DataFrame({
+    'x': short_x,
+    'y': short_y
+})
+
+sns.scatterplot(data=long_df, x='x', y='y', color='green', s=150)
+sns.scatterplot(data=short_df, x='x', y='y', color='red', s=150)
+
+ax.set(xlabel='time after trainset', ylabel='common ylabel')
+plt.show()
+\end{lstlisting}
+
+Code for getting the mean-reverting force for second backtest:
+
+\begin{lstlisting}
+import ou
+
+base_path = os.path.join(DATA_BASE, TICKER_BASE + '.pkl')
+aux_path = os.path.join(DATA_BASE, TICKER_AUX + '.pkl')
+
+base = pd.read_pickle(base_path)
+aux = pd.read_pickle(aux_path)
+spreads = base - aux
+
+trainset = spreads[:TRAIN_SET_END].iloc[:, 0]
+testset = spreads[TRAIN_SET_END:].iloc[:, 0]
+
+print(len(trainset))
+
+mean_coeff, mean_intercept, theta, sigma = ou.calibrate(trainset)
+
+print(f'mu(t) = {mean_coeff}t + {mean_intercept}')
+print(f'theta = {theta}')
+print(f'sigma = {sigma}')
+\end{lstlisting}
+
+Code for performing the second backtest:
+
+\begin{lstlisting}
+data = pd.DataFrame({
+    'spread': testset,
+    'base': base.iloc[TRAIN_SET_END:, 0],
+    'aux': aux.iloc[TRAIN_SET_END:, 0]
+})
+
+class Position:
+    def __init__(self, short: bool, entry: float, capital: float, entry_index: int) -> None:
+        self.short = short
+        self.entry = entry
+        self.capital = capital
+        self.entry_index = entry_index
+
+    def liquidate(self, price: float) -> float:
+        if not self.short:
+            # long
+            shares = self.capital / self.entry
+            return shares * price
+        else:
+            # short
+            price_delta = self.entry - price
+            shares = self.capital / self.entry
+            return (price_delta * shares) + self.capital
+
+
+def alocate_capital_fractionally(cap, base, aux):
+    total = base + aux
+    num_shares = cap / total
+    return num_shares * base, num_shares * aux
+
+
+def backtest(signal_treshold):
+    working_capital = 100
+
+    base_position: Position = None
+    aux_position: Position = None
+
+    capital_progression = []
+    long_trades = []
+    short_trades = []
+
+    for index, rows in data.iterrows():
+        spread = rows['spread']
+        base = rows['base']
+        aux = rows['aux']
+
+        # get mean reverting force at index
+        mean = mu(index)
+        force = theta * (mean - spread)
+
+        if force > signal_treshold:
+            # bet spread goes up
+            # long base
+            if base_position == None:
+                print(f'entering long at {index}')
+                base_cap, aux_cap = alocate_capital_fractionally(working_capital, base, aux)
+
+                base_position = Position(False, base, base_cap, index)
+                aux_position = Position(True, aux, aux_cap, index)
+
+            elif base_position.short:
+                # liquidate base short, aux long
+                print(f'liquidating short at {index}')
+                short_trades.append((base_position.entry_index, index))
+
+                working_capital = base_position.liquidate(base)
+                working_capital += aux_position.liquidate(aux)
+
+                base_position = None
+                aux_position = None
+
+        elif -force > signal_treshold:
+            # bet spread goes down
+            # short base
+            if base_position == None:
+                print(f'entering short at {index}')
+                base_cap, aux_cap = alocate_capital_fractionally(working_capital, base, aux)
+
+                base_position = Position(True, base, base_cap, index)
+                aux_position = Position(False, aux, aux_cap, index)
+            elif not base_position.short:
+                # liquidate base long, aux short
+                print(f'liquidating long at {index}')
+                long_trades.append((base_position.entry_index, index))
+
+                working_capital = base_position.liquidate(base)
+                working_capital += aux_position.liquidate(aux)
+
+                base_position = None
+                aux_position = None
+
+        capital_progression.append(working_capital)
+
+    return capital_progression, working_capital, long_trades, short_trades
+
+
+capital_progression, capital, long_trades, short_trades = backtest(0.2)
+print(f'capital: {capital}')
+
+df = pd.DataFrame({
+    'x': range(len(capital_progression)),
+    'y': capital_progression
+})
+
+sns.lineplot(data=df, x='x', y='y')
+plt.show()
+\end{lstlisting}
+
+Code for plotting the results of the second backtest:
+
+\begin{lstlisting}
+# show trade entrances and exits
+
+data['index'] = data.index
+
+plt.figure(figsize=(18, 13))
+
+sns.lineplot(data=data, x='index', y='spread')
+
+for (entry, exit) in long_trades:
+    entry_y = data.loc[entry]['spread']
+    exit_y = data.loc[exit]['spread']
+
+    plt.plot([entry, exit], [entry_y, exit_y], linewidth=5, color='green')
+
+for (entry, exit) in short_trades:
+    entry_y = data.loc[entry]['spread']
+    exit_y = data.loc[exit]['spread']
+
+    plt.plot([entry, exit], [entry_y, exit_y], linewidth=5, color='red')
+
+plt.show()
+\end{lstlisting}
 
 \end{spacing}
 \end{document}
