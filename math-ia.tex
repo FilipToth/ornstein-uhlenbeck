@@ -93,7 +93,7 @@ In the diagram, we can clearly observe that the the variance of the Wiener proce
 The wiener process is crucial and has many financial applications, for example, equity prices under the assumption of the efficient
 market hypothesis follow a purely-stochastic Wiener process. This although disregards stochastic drift, which applies directional
 pressure on equity prices, i.e., the Wiener process is market-agnostic, and applies to equity which do not follow the upward trend
-of the market due to the positive risk-free rate.
+of the market due to the positive risk-free rate. Non-market agnostic processes typically leverage geometric brownian motion.
 
 
 \section{Ornstein-Uhlenbeck Process}
@@ -695,7 +695,29 @@ We can see that our CAGR is around $18.23 \%$, which is absolutely top-of-the-li
 that this is a statistical arbitrage strategy that isolates the market effect, thus is esentially "recession-proof". For reference, the S\&P-500 returned an average CAGR of just
 $11.24 \%$ over the same time period, and experienced a very strong rally in late 2020, the S\&P usually averages around 8\% per year.
 
-\section{Optimal Execution Region and OU Parameters}
+\section{Optimizations and Model Improvements}
+
+We notice that our algorithm, while generating some pretty impressive returns, does not fully capture potential value, mostly due to us using a pre-set criterion for the mean-reverting
+force to fire signals. Originally, this section was reserved for optimizing this value using basic mathematical non-linear programming methods. This would have likely required the use
+a whole lot more theory, while delivering an algorithm that is less flexible than what we are proposing next, and would be way out of line of the IB mathematics curriculum. The only
+upside to this is that these optimization problems are very common in quantitative finance and should be in every Quant Researcher's toolbox. Rather, in this section, we will propose
+a series of adjustments to the model that will make it more flexible, usable, and generate higher returns.
+
+\subsection{Simple Moving Average}
+
+We currently compute the mean function $\mu(t)$ by running a simple OLS regression and then using the line of best fit as an estimator for the mean. This makes us unable to adjust
+to dynamically changing base values of the spread oscillations. It's also better to recompute the mean as we go through time in the backtest, and we should have done this anyway in
+our base model. We define the SMA with the following:
+\begin{gather*}
+    \mu(t) = \frac{1}{n} \sum_{i = t - n}^{t} \mathcal{X}_{i} \text{, where } |\mathcal{X}| \ge n
+\end{gather*}
+Where $n$ is the sample size for the SMA. Esentially, the number of time frames we consider looking back.
+\begin{center}
+    \includegraphics[scale=0.38]{./images/spreads_sma.png}
+\end{center}
+You can see that the 150 day SMA captures the dynamic nature of spreads a little better, while still not being perfect.
+
+\subsection{Optimizing Signals for Local Extrema}
 
 \end{spacing}
 \end{document}

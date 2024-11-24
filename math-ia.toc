@@ -19,4 +19,6 @@
 \contentsline {subsection}{\numberline {5.1}A Bit of Background: Long Short}{23}{}%
 \contentsline {subsection}{\numberline {5.2}Defining our Straregy}{23}{}%
 \contentsline {subsection}{\numberline {5.3}Backtest with Unoptimized Tresholds}{24}{}%
-\contentsline {section}{\numberline {6}Optimal Execution Region and OU Parameters}{27}{}%
+\contentsline {section}{\numberline {6}Optimizations and Model Improvements}{27}{}%
+\contentsline {subsection}{\numberline {6.1}Simple Moving Average}{27}{}%
+\contentsline {subsection}{\numberline {6.2}Optimizing Signals for Local Extrema}{28}{}%
