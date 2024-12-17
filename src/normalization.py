@@ -18,7 +18,12 @@ for filename in os.listdir(data_path):
 
     prices = df[0]
     initial = prices[0]
+
     normalized = prices / initial
+    normalized_df = pd.DataFrame({
+        0: normalized,
+        1: df[1]
+    })
 
     export_file = os.path.join(export_path, filename)
-    normalized.to_pickle(export_file)
+    normalized_df.to_pickle(export_file)
