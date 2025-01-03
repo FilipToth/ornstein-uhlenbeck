@@ -17,4 +17,9 @@
 Did least squares regression, doesn't really seem like a good fit,
 will have to calculate the error. Do that tomorrow.
 
+
+TODO:
+ - [ ] Replace images with new regularized graphs
+ - [ ] BibTex references...
+
 **Before doing MLE, try and actually use the model, do MLE as an addition**

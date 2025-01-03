@@ -721,7 +721,16 @@ You can see that the 150 day SMA captures the dynamic nature of spreads a little
 \subsection{Optimizing Signals for Local Extrema}
 
 We intuitively note the fact that the most optimal entry and exit points (signal points) in a stat-arb strategy focusing OU oscillations in equity spreads are local extrema points of
-the non-continuous price function.
+the non-continuous price function. Since out pricing date resembles a function that is discrete and not continuous, we cannot use a limit converging to zero to calculate the derivative
+of the prices. Thus we cannot use a regular derivative (since a requirement for that is having a continuous function), but we can
+approximate the derivative using a technique called Automatic Differentiation.
+\begin{gather*}
+    f'(x) = \underset{h \to 0}{\lim} \frac{f(x + h) - f(x)}{h} \approx
+    \frac{f(x) - f(x - 1)}{\Delta x}
+\end{gather*}
+
+% https://notesonai.com/automatic+differentiation
+% interesting read https://arxiv.org/abs/2210.08572
 
 \newpage
 
