@@ -661,7 +661,7 @@ $-F > \tau_{\text{down}}$, we open a short position on the spread and liquidate 
 \begin{algorithm}
     \caption{Backtesting algorithm}
     \begin{algorithmic}
-        \For{$X_{t}$ \textbf{in} \texttt{testset}}
+        \For{$X_{t}$ $\in$ \texttt{testset}}
             \If{$F > \tau_{\text{up}}$}
                 \State \texttt{exit\_short}()
                 \State \texttt{open\_long}()
@@ -718,19 +718,43 @@ Where $n$ is the sample size for the SMA. Esentially, the number of time frames 
 \end{center}
 You can see that the 150 day SMA captures the dynamic nature of spreads a little better, while still not being perfect.
 
-\subsection{Optimizing Signals for Local Extrema}
+\subsection{Optimizing Signals for Local Suprema}
 
-We intuitively note the fact that the most optimal entry and exit points (signal points) in a stat-arb strategy focusing OU oscillations in equity spreads are local extrema points of
-the non-continuous price function. Since out pricing date resembles a function that is discrete and not continuous, we cannot use a limit converging to zero to calculate the derivative
+We intuitively note the fact that the most optimal entry and exit points (signal points) in a stat-arb strategy focusing OU oscillations in equity spreads are local suprema points of
+the time-discrete price/spread function. Since out pricing data resembles a function that is discrete and not continuous, we cannot use a limit converging to zero to calculate the derivative
 of the prices. Thus we cannot use a regular derivative (since a requirement for that is having a continuous function), but we can
-approximate the derivative using a technique called Numerical Differentiation.
+approximate the derivative using a technique resembling Numerical Differentiation. General Numerical Differentiation relies on approximating the tangent using a secant line, by applying some
+finite difference $\Delta x$.
 \begin{gather*}
     f'(x) = \underset{h \to 0}{\lim} \frac{f(x + h) - f(x)}{h} \approx
-    \frac{f(x) - f(x - 1)}{\Delta x}
+    \frac{f(x + \Delta x) - f(x)}{\Delta x}
 \end{gather*}
+Numerical Differentiation also relies on the function consisting of time-continuous data, since our data is time-discrete, the minimum step-size we can use is the resolution of our
+dataset. Thus, we can simply define our discrete derivative as the change between the current value $X_{t}$ and the previous value $X_{t - 1}$, $\frac{dX_{t}}{dt} = X_{t} - X_{t - 1}$.
+We can draft up the following algorithm.
 
-% https://notesonai.com/automatic+differentiation
-% interesting read https://arxiv.org/abs/2210.08572
+\begin{algorithm}
+    \caption{Time Series Derivative Algorithm}
+    \begin{algorithmic}
+        \State {\texttt{last} $\leftarrow$ $0$}
+        \For{$x$ $\in$ $\mathcal{X}$}
+            \State{\texttt{derivative}[t] $\leftarrow$ $x - \texttt{last}$}
+            \State{\texttt{last} $\leftarrow x$}
+        \EndFor
+    \end{algorithmic}
+\end{algorithm}
+We can now use the algorithm to compute the derivative of the AMGN/VOD Spread.
+\begin{center}
+    \includegraphics[scale=0.40]{./images/amgn_vod_derivative.png}
+\end{center}
+We notice that the result is very noisy and we would get a lot of suprema points if we were to search for them, we need to use a function to smooth out the underlying data, so
+small changes in momentum won't cause the supremum signal to fire.
+
+\newpage
+
+\subsection{Gaussian Kernel Smoothing}
+
+\subsection{Performance of Improved Backtest}
 
 \newpage
 

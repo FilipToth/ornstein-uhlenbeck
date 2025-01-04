@@ -21,5 +21,7 @@
 \contentsline {subsection}{\numberline {5.3}Backtest with Unoptimized Tresholds}{24}{}%
 \contentsline {section}{\numberline {6}Optimizations and Model Improvements}{27}{}%
 \contentsline {subsection}{\numberline {6.1}Simple Moving Average}{27}{}%
-\contentsline {subsection}{\numberline {6.2}Optimizing Signals for Local Extrema}{28}{}%
-\contentsline {section}{\numberline {7}Appendix}{29}{}%
+\contentsline {subsection}{\numberline {6.2}Optimizing Signals for Local Suprema}{28}{}%
+\contentsline {subsection}{\numberline {6.3}Gaussian Kernel Smoothing}{30}{}%
+\contentsline {subsection}{\numberline {6.4}Performance of Improved Backtest}{30}{}%
+\contentsline {section}{\numberline {7}Appendix}{31}{}%
