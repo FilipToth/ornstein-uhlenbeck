@@ -1,0 +1,55 @@
+\begin{thebibliography}{7}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Goodman(n.d.)]{goodman_derivative_securities}
+Jonathan Goodman.
+\newblock Lecture notes on derivative securities: Stochastic calculus and
+  applications, n.d.
+\newblock URL
+  \url{https://math.nyu.edu/~goodman/teaching/DerivSec10/notes/week6.pdf}.
+\newblock Accessed: 2024-12-22.
+
+\bibitem[Hurvich(n.d.)]{hurvich_unit_root}
+Clifford~M. Hurvich.
+\newblock Unit roots and cointegration: A brief introduction, n.d.
+\newblock URL
+  \url{https://pages.stern.nyu.edu/~churvich/Forecasting/Handouts/UnitRoot.pdf}.
+\newblock Accessed: 2024-12-22.
+
+\bibitem[Kliemann(n.d.)]{mediatum_stochastic_calculus}
+Wolfgang Kliemann.
+\newblock Introduction to stochastic calculus and applications, n.d.
+\newblock URL \url{https://mediatum.ub.tum.de/doc/1072652/1072652.pdf}.
+\newblock Accessed: 2024-12-22.
+
+\bibitem[Kozdron(2014)]{uregina_ou_solution}
+Michael Kozdron.
+\newblock Introduction to brownian motion and stochastic calculus, 2014.
+\newblock URL
+  \url{https://uregina.ca/~kozdron/Teaching/Regina/441Fall14/Notes/L31-32-Nov19.pdf}.
+\newblock Accessed: 2024-12-22.
+
+\bibitem[Lalley(n.d.)]{lalley_brownian_motion}
+Steven~P. Lalley.
+\newblock Brownian motion and stochastic calculus, n.d.
+\newblock URL
+  \url{https://galton.uchicago.edu/~lalley/Courses/313/BrownianMotionCurrent.pdf}.
+\newblock Accessed: 2024-12-22.
+
+\bibitem[{NASDAQ}(n.d.)]{nasdaq}
+{NASDAQ}.
+\newblock Nasdaq stock market data and resources, n.d.
+\newblock URL \url{https://www.nasdaq.com}.
+\newblock Accessed: 2024-12-22.
+
+\bibitem[Seabold and Perktold(2010)]{seabold_pytts}
+Skipper Seabold and Josef Perktold.
+\newblock statsmodels: Econometric and statistical modeling with python.
+\newblock \url{https://www.statsmodels.org}, 2010.
+\newblock Accessed: 2024-12-22.
+
+\end{thebibliography}

@@ -1,21 +1,32 @@
 \documentclass{article}
 
-\usepackage{amsmath} % For gather and other math environments
-\usepackage{setspace} % For double spacing
-\usepackage{mathtools} % amsmath extensions
-\usepackage{amsfonts} % math fonts
-\usepackage{graphicx} % for images
-\usepackage{listings} % for code blocks
-\usepackage{color}    % for colored code
-\usepackage{pgfplots} % for plotting function
-\usepackage{booktabs} % for tables
-\usepackage{float}
-\usepackage{algorithm} % for algorithm notation
-\usepackage{algpseudocode}
+\usepackage{amsmath}                    % For gather and other math environments
+\usepackage{setspace}                   % For double spacing
+\usepackage{mathtools}                  % amsmath extensions
+\usepackage{amsfonts}                   % math fonts
+\usepackage{graphicx}                   % for images
+\usepackage{listings}                   % for code blocks
+\usepackage{color}                      % for colored code
+\usepackage{pgfplots}                   % for plotting function
+\usepackage{booktabs}                   % for tables
+\usepackage{float}                      % for floating images
+\usepackage{algorithm}                  % for algorithm notation
+\usepackage{algpseudocode}              % for algorithm syntax highlighting
+\usepackage{cite}                       % for citations
+\usepackage[nottoc,numbib]{tocbibind}   % to make bibliography appear in table of contents
+\usepackage[numbers]{natbib}            % for bibliography urls
+\usepackage{hyperref}                   % for bibliography urls
 
 \usepackage[a4paper, margin=3.17cm]{geometry}
 
-\graphicspath{{ ./images/ }}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=blue,
+    citecolor=black
+}
+
+\graphicspath{{ ../images/ }}
 
 % notes:
 % https://hudsonthames.org/caveats-in-calibrating-the-ou-process/
@@ -41,7 +52,6 @@
 % very good video on DF and ADF tests, doesn't actually really explain how to do them:
 % https://www.youtube.com/watch?v=T5BhGv742j4
 
-
 % notes on stochastic processes and SDEs
 % https://math.nyu.edu/~goodman/teaching/DerivSec10/notes/week6.pdf
 % https://planetmath.org/analyticsolutiontoornsteinuhlenbecksde
@@ -54,7 +64,7 @@
     \vspace*{\fill}
     \vspace*{-4cm}
     \begin{center}
-        \huge \textbf { Ornstein Uhlenbeck Process Statistical Arbitrage on Cointegrated Equity Pairs and Application in Quantitative Finance } \\
+        \huge \textbf { Ornstein Uhlenbeck Process Statistical Arbitrage on Cointegrated Equity Pairs } \\
         \vspace{0.5cm}
         \Large \textit { by Filip Toth }
     \end{center}
@@ -64,39 +74,50 @@
     \end{center}
 \end{titlepage}
 
+\pagenumbering{gobble} % turn off page numbering for toc
 \tableofcontents
 \newpage
 
+% restart page numbering
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
 \begin{spacing}{2.0}
+
+\section{Introduction}
+
+In modern financial markets, algorithmic trading relies heavily on mathematical tools (such as stochastic processes) to identify trading opportunities (signals) and
+improve performance. Among these stochastic processes, the ornstein-uhlenbeck process is the pillar of mean reversion strategies, which are designed to capitalize
+on deviations in asset prices (or in our case, the difference between asset prices) from their long-term equilibrium.
+In this mathematical exploration, we examine the use of the Ornstein-Uhlenbeck process in statistical arbitrage, focusing on its application within equity pairs trading.
+We identify pairs of equities that are viable for statistical arbitrage by using the Augmented Dickey Fuller Test for time-series cointegration.
+Through a detailed exploration of the mathematics behind stochastic processes, stochastic differential equations (SDEs), numerical methods for solving SDEs, and
+backtesting techniques, this IA demonstrates the feasability and effectiveness of mathematical models in quantitative finance. The quantitative findings and return
+metrics aim to provide insight into the extent of the role of mathematics in modern trading strategies and highlight areas for further refinement and application.
+
 \section{Brownian Motion and the Wiener Process}
 
-Consider a stochastic process, where per each iteration, we add a $\Delta$ to the previous value,
-this $\Delta$ is distributed by a normal distribution with a $mu$ of zero, and these are independent
-stochastic events this is called the Wiener process. In discrete time, we can define the Wiener process
+Consider a stochastic process, where per each iteration, we add some change $\Delta$ to the previous value,
+this $\Delta$ is distributed by a normal distribution with a $\mu$ (average, of course) of zero, which we then sample in independent
+stochastic events. The result will be a Wiener Process ~\cite{lalley_brownian_motion}. In discrete time, we can define the Wiener process
 with the following equation
 \begin{gather*}
     W_{t + 1} = W_{t} + \mathcal{N}(0, \sigma^{2})
 \end{gather*}
 Where $W_{t + 1}$ is the next value of the process (under discrete time), $\mathcal{N}(0, \sigma^{2})$
 is a normally distributed drift variable with the variance $\sigma^{2}$.
-
 Intuitively, the expected value, i.e. the limit of this process as it approaches infinity, should
-be zero, since the normal distribution is symmetric. (maybe prove this? Using a limits on the $\mathbb{E}[W]$ and the normal dist)
-
+be zero, since the normal distribution is symmetric.
 The spread of the Wiener process grows at a rate of $\sigma_{t} = \sigma \sqrt{t}$, due to each timestep adding additional compounded uncertainty.
-
 Here's an example of a Wiener process with $W_{0} = 0$ and $\sigma^{2} = 1$:
 \begin{center}
-    \includegraphics[scale=0.35]{./images/wiener.png}
+    \includegraphics[scale=0.35]{../images/wiener.png}
 \end{center}
 In the diagram, we can clearly observe that the the variance of the Wiener process gets larger as the time progresses.
-
 The wiener process is crucial and has many financial applications, for example, equity prices under the assumption of the efficient
 market hypothesis follow a purely-stochastic Wiener process. This although disregards stochastic drift, which applies directional
 pressure on equity prices, i.e., the Wiener process is market-agnostic, and applies to equity which do not follow the upward trend
 of the market due to the positive risk-free rate. Non-market agnostic processes typically leverage geometric brownian motion.
-
-
 \section{Ornstein-Uhlenbeck Process}
 
 \subsection{Deriving a Mean Reversion Mechanism}
@@ -104,15 +125,12 @@ of the market due to the positive risk-free rate. Non-market agnostic processes 
 But what if we don't want the variance of the process to get larger as time progresses? We call these processes mean-reverting, as in they
 tend to revert their values back towards the mean $\mu$. This has numerous financial applications (not to mention its applications outside
 of finance), for example: statstical arbitrage, interest rate models, heston model, and mean reverting equities.
-
 So how do we implement mean reversion? We can start by thinking about what mean reversion actually is? Mean reversion is the tendency of a
-variable (or usually a stochastic process) to revert back to its long-term mean. If we consider the roots of brownian motion - physics -, we
+variable (or usually a stochastic process) to revert back to its long-term mean. If we consider the roots of brownian motion - physics - we
 can consider a mean-reverting term to be similar to a force pushing a particle back towards its mean; note that this doesn't happen
 instantaneuously, it happens over a period of time, where the steadyness of this decay is dictated by the rate of mean-reversion, denoted as
 $\theta$.
-
 We know that an exponential function with a negative coefficient applied to the exponent will produce a function that will slowly decay.
-
 \begin{center}
 \begin{tikzpicture}
     \begin{axis}[
@@ -130,21 +148,17 @@ We know that an exponential function with a negative coefficient applied to the 
     \end{axis}
 \end{tikzpicture}
 \end{center}
-
 But this is not exactly mean reverting, we need to adjust the function to not only have the tendency to approach zero, but rather, the function must approach
 the mean. And the function must be applied from any starting point $x_{0}$. Considering that $f(0) = x_{0}$, we can adjust the function and introduce a base
 term: $f(x) = x_{0}e^{-\theta x}$, this ensures the initial value is $x_{0}$, since $e^{0} = 1$. Now we have to ensure that the function converges at the mean,
 not at zero. Initially, we can try to add a the mean as a constant term, such that $f(x) = \mu + x_{0}e^{-\theta x}$, but when graphing this function, we notice
 that we break our first condition - the initial value of the function $f(0)$ is not equal to $x_{0}$. We have to adjust for this in the coefficient of the
 exponential term. We notice that the difference between $x_0$ and $f(0)$ is equal to the mean, thus modifying the function to the following will solve our problem:
-
 \begin{gather*}
     f(x) = \mu + (x_{0} - \theta)e^{-\theta x}
 \end{gather*}
-
 The function produces the following graph, assuming $\mu = 4$, $\theta = 0.4$ and varying the initial value $x_{0}$ to be $x_{0} \in \{8, 5, -1 \} $ for each of the
 separate lines respectivelly:
-
 \begin{center}
 \begin{tikzpicture}
     \begin{axis}[
@@ -199,7 +213,6 @@ of tug applied for each value above or below the mean.
 We know that the derivative of the constant $\mu$ is zero, thus we can eliminate the term. We are left with the derivative of a product, for which we can
 use the product rule of differentiation: $\frac{d}{dt}x \cdot y = x'y + xy'$. In our case, the two terms are $( X_{0} - \mu )$ and $e^{-\theta t}$. The first
 term is a constant that does not chage with respect to $t$, thus it will be zero. The second term can be differentiated using the chain rule.
-
 We need to define an outer and an inner function in order to apply the chain rule, the inner function will be $e^{x}$ and the outer function will be $-\theta t$.
 The $\frac{d}{dx}e^{x} = e^{x}$ is a standard differential. And the $\frac{d}{dx} -\theta x$ will simply collapse down to $-\theta$, since it's a constant that is
 applied to our differentiating variable. The chain rule states:
@@ -229,25 +242,22 @@ We are left with the following stochastic process:
     X_{t + 1} = -\theta(X_{t} - \mu)e + \mathcal{N}(0, \sigma^{2})
 \end{gather*}
 We can not create stochastic paths along the process and they should be mean reverting. A stochastic path (more formally called a sample path of a stochastic process) is simply
-a possible outcome of running the process, esentially a random path that conforms to the process.
+a possible outcome of running the process, essentially a random path that conforms to the process.
 \begin{center}
-    \includegraphics[scale=0.35]{./images/naive_ou.png}
+    \includegraphics[scale=0.35]{../images/naive_ou.png}
 \end{center}
 Here we can see that the stochastic process is much more contained within a range, and is thus mean-reverting.
 
 \subsection{Formal Derivation of the OU Process}
 
 The Ornstein Uhlenbeck process is formally defined as a stochastic differential equation (SDE). An SDE is just a differential equation with a stochastic term.
-
 We begin with adding a brownian motion component. A standard wiener process in its differential form is: $dX_{t} = dW_{t}$, this is pretty straight forward if you think about it,
 the change in $X_{t}$ is just the change in $W_{t}$, this being a stochastic component, $dW_{t}$ will always be different, and for the sake of simplicity, we can visualize this as if
 the term follows the normal distribution $dW_{t} \sim \mathcal{N}(0, \sigma^2)$, this isn't entire true because the variance of the normal distribution itself depends on $dt$,
-but we will get to that later.
-
-We now add the drift term (which we derived in a previous subchapter) $\theta(\mu - X_{t})$ (we derived it as $-\theta(X_{t} - \mu)$, but these are functionally equivalent), we can say that this drift happens
+but we will get to that later. We now add the drift term (which we derived in a previous subchapter) $\theta(\mu - X_{t})$ (we derived it as $-\theta(X_{t} - \mu)$, but these are functionally equivalent), we can say that this drift happens
 - continuously - over time t, thus can be written as $\theta(\mu - X_{t}) dt$, recall that $dt$ here represents an infinitesmal (very small) change in time $t$, thus the whole term
 represents the change in the process value $X_{t}$ as we change time $t$ by an infinitesmal amount and can thus be written as $\frac{d X_{t}}{dt} = \theta(\mu - X_{t})$, but this
-is just basic differential equations. We end up with:
+is just basic differential equations. We end up with: ~\cite{mediatum_stochastic_calculus}
 \begin{gather*}
     dX_{t} = \theta(\mu - X_{t}) dt + dW_{t}
 \end{gather*}
@@ -257,13 +267,10 @@ component. We end up with the final formal definition of the OU process:
     dX_{t} = \theta(\mu - X_{t}) dt + \sigma dW_{t}
 \end{gather*}
 
-
 \section{Long-term Equilibrium Cointegration in Equity Markets}
 
 We perform the \textbf{Two Step Engle-Granger Test} for cointegration of time series to get the cointegration coefficient. This method is widely accepted
-in quantitative finance and econometrics.
-
-But what is cointegration? Cointegration represents the level to which a linear combination
+in quantitative finance and econometrics.But what is cointegration? Cointegration represents the level to which a linear combination
 of two (or more) time series $X_{t} = \beta Y_{t}$ follows a stationary time series $I(0)$.
 Or in other words, whether the linear combination has a zero long-term mean. We can take
 any linear combination, such as the linear regression of $X_{t}$ on $Y_{t}$, in the next
@@ -295,8 +302,6 @@ Now we calculate the residuals $\hat \epsilon_{t}$ using the formula $\hat \epsi
 terms of the linear regression equation with resduals. We can interpret these residuals as the difference (for each timestep $t$) between the actual value $X_{t}$
 and the predicted value - the value of the regression solution for the parameter $t$.
 
-
-
 \subsection{Dickey Fuller Test}
 
 The Dickey Fuller Test or (DF Test for short) is a statistical test that tests for the stationarity of a time series, or in other words, it tests for if the
@@ -312,7 +317,7 @@ assumed to be white noise $\epsilon_{t} \sim \mathcal{N}(0, \sigma^2)$. Now we c
 Where the null hypothesis denotes that the process is non-stationary and the alternative hypothesis indicates that the process is stationary. We could simply use a t-test
 to see if a $\hat \phi$ estimator is statistically significant, and based on that reject or fail to reject the null hypothesis of the DF Test. But the t-test is inapplicable
 in models where the central limit theorem doesn't hold true (because the $\epsilon$ values of the process are not independent and identically distributed), thus we need to use the
-DF test. First, we transform our original time series expression in as a differencing equation. Note that we also rewrite the $y_{t} - y_{t - 1}$ as $\Delta y_{t}$.
+DF test. First, we transform our original time series expression in as a differencing equation. Note that we also rewrite the $y_{t} - y_{t - 1}$ as $\Delta y_{t}$. ~\cite{hurvich_unit_root}
 \begin{gather*}
     y_{t} = \alpha + \phi y_{t - 1} + \epsilon_{t} \\
     y_{t} - y_{t - 1} = \alpha + \phi y_{t - 1} - y_{t - 1} + \epsilon_{t} \\
@@ -352,14 +357,13 @@ $\alpha, \delta, \beta_{1}, \beta_{2}, \dots, \beta_{p}$, we then use the $\delt
 
 \subsection{Performing the Two-Step Engle Granger Test on Equity Prices}
 
-We now perform the two-step engle granger test on 78 mature stocks from the selected from NADSAQ-100 index from Janurary 1st 2014 to January 1st 2024. We pair every stock with every other
+We now perform the two-step engle granger test on 78 mature stocks from the selected from NADSAQ-100 ~\cite{nasdaq} index from Janurary 1st 2014 to January 1st 2024. We pair every stock with every other
 stock resulting in $78^2 = 6084$ pairs, for each of these pairs we perform an OLS regression and get the residual values (as described in subsection 1) and then perform the Augmented Dickey
 Fuller Test using the 'statsmodels' library. We extract the p-values of the test and end up with the following heatmap:
 \begin{center}
-    \includegraphics[scale=0.45]{./images/cointegration.png}
+    \includegraphics[scale=0.45]{../images/cointegration.png}
 \end{center}
-Only 100 pairs are displayed as the complete 78x78 heatmap is too large to present here.
-
+~\cite{seabold_pytts} Only 100 pairs are displayed as the complete 78x78 heatmap is too large to present here.
 We now select 10 of the most cointegrated (lowest p-values) equity pairs to further examine, the ten most cointegrated pairs were, in descending order of cointegration, we observe
 that most of the equity pairs with very heavy cointegration have AAPL (Apple Inc.) as the base stock, this is interesting as AAPL has heavily outperformed even the growth-heavy
 NASDAQ, thus this should create a larger spread between most other stocks, suggesting limitations of our test.
@@ -389,13 +393,13 @@ pair and a non-cointegrated pair to better visualize the idea of cointegration.
     \centering
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{./images/amgn_vod_cointegration.png}
+        \includegraphics[width=\textwidth]{../images/amgn_vod_cointegration.png}
         \caption{AMGN, VOD, p-value: 0.000181}
     \end{minipage}
     \hfill
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{./images/adbe_tsla_cointegration.png}
+        \includegraphics[width=\textwidth]{../images/adbe_tsla_cointegration.png}
         \caption{ADBE, TSLA, p-value: 0.484251}
     \end{minipage}
 \end{figure}
@@ -410,13 +414,13 @@ and that OLS residuals might not give us the full picture. Let's examine the dif
     \centering
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{./images/amgn_vod_cointegration.png}
+        \includegraphics[width=\textwidth]{../images/amgn_vod_cointegration.png}
         \caption{AMGN-VOD cointegration regression residuals}
     \end{minipage}
     \hfill
     \begin{minipage}{0.48\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{./images/spread_amgn_vod.png}
+        \includegraphics[width=\textwidth]{../images/spread_amgn_vod.png}
         \caption{AMGN-VOD spread with line of best fit}
     \end{minipage}
 \end{figure}
@@ -431,15 +435,12 @@ Our Ornstein Uhlenbeck model resembles the residuals and not the actual spreads,
 \section{Fitting the Ornstein Uhlenbeck Process to our Data}
 
 There are two ways you can calibrate an Ornstein Uhlenbeck process for a particular dataset. Either using a simple OLS regression for the OU parameters ($\theta$, $\sigma$, $\mu$), or
-you can use a much more rigorous technique that yields better results, called: Maximum Likelyhood Estimation (MLE), while if this weren't a Math IA, I would use MLE (due to there already
-being pre-existing implementation and it being fairly easy to understand, just requires basic multivariable calculus), we do not have the capacity to explain MLE in this IA, additionally,
-OLS parameter estimation is frequently used in Quant Finance, despite it's obvious limitations. The first step is obtaining a formal solution to the OU stochastic differential equation (SDE).
+you can use a much more rigorous technique that yields better results, called: Maximum Likelyhood Estimation (MLE), we do not have the capacity to explain MLE in this IA due to it requiring
+multivariable calculus (A formal definition of multivariable OLS regressions also requires matrix calculus, it's very simple, we just don't have the capacity for it) and a bit more
+rigorous understandng of probability theory, additionally, OLS parameter estimation is frequently used in Quantitative Finance, despite it's obvious limitations. The first step is
+obtaining a formal solution to the OU stochastic differential equation (SDE).
 
 \subsection{Formal Analytical Solution to the OU SDE}
-
-\textbf{This might not be in the final IA as I've found a way to do this with just the discrete-time solution, making this section obsolete. Might still have to use it
-when optimizing the tresholds (discussed later)}
-\\
 
 We start with the OU SDE we derived in a previously, and we expand the deterministic drift term.
 \begin{gather*}
@@ -456,7 +457,7 @@ $\frac{dx}{dy} + P(x) y = Q(x)$, which we can fit to our deterministic ODE:
 where ${P(x) = \theta}$ and $Q(x) = \theta \mu$, we can now use the above-mentioned formula to find the integrating factor, $I(t) = e^{\int P(t) \, dx}$ (notice that
 we switch to $t$ since $dt$ is our differential and not $dx$). Subce $\theta$ is a constant, we can easily evaluate the integral $\int \theta \, dt = \theta t + C$,
 thus our integrating factor becomes: $I(t) = e^{\theta t}$, notice that we deliberately ignore the constant term $C$. Now, going back to our SDE, we can apply our
-integrating factor.
+integrating factor. ~\cite{uregina_ou_solution}
 \begin{gather*}
     dX_{t} = \theta \mu dt - \theta X_{t} dt + \sigma dW_{t} \\
     e^{\theta t} dX_{t} = e^{\theta t} \theta \mu dt -  e^{\theta t} \theta X_{t} dt + e^{\theta t} \sigma dW_{t}
@@ -479,7 +480,7 @@ And we can apply this to the SDE, like so:
 Now we can integrate to find the general solution to the linear stochastic differential equation. Note that for our stochastic components, we can't perform the regular
 Riemann Integral, but rather, we have to use the Itô Integral. We define an Itô Integral as an integral on a stochastic process, the result of the Itô Integral is another
 stochastic process, that esentially defines the "sum" of the process up until a certain time $t$, it can again, be solved by application of the Itô's Lemma. We define a general
-Itô Integral as:
+Itô Integral as: ~\cite{goodman_derivative_securities}
 \begin{gather*}
     \int_{0}^{t} f(s) dX_{s}
 \end{gather*}
@@ -613,13 +614,13 @@ calibrating the OU process on the time series of spreads between 'NASDAQ: AMGN' 
 We can now plot a sample path along our calibrated Ornstein Uhlenbeck Process (with the above parameters) and the spreads between 'AMGN' and 'VOD', and visually confirm that they
 line up quite nicely:
 \begin{center}
-    \includegraphics[scale=0.35]{./images/calibrated_ou_sample_path_amgn_vod.png}
+    \includegraphics[scale=0.35]{../images/calibrated_ou_sample_path_amgn_vod.png}
 \end{center}
 
 \section{Unoptimized OU-based Trading Strategy}
 
 Since we have a calibrated mean-reverting process, we can now leverage this to create an algorithmic trading strategy capturing the mean-reverting mechanism of the spread between two
-equities - we will look at 'AMGN' and 'VOD' for now, but this can be extended to any pair of equities (and even multiple equities through a more advanced straregy). The idea is pretty
+equities - we will look at 'AMGN' and 'VOD' for now, but this can be extended to any pair of equities (and even multiple equities through a more advanced strategy). The idea is pretty
 simple, bet that the spread between them will rever to its long-term mean, but how exactly do we do that?
 
 \subsection{A Bit of Background: Long Short}
@@ -676,92 +677,61 @@ $-F > \tau_{\text{down}}$, we open a short position on the spread and liquidate 
 For reference, let's graph the mean reverting force $\theta (\mu(t) - X_{t})$ against the quity spreads, we should see an inversely-proportional relationship, such that when the spread
 gets greater, the mean reverting force should decrease (into the negative) and when the spread gets into the negative, the mean reverting force should increase.
 \begin{center}
-    \includegraphics[scale=0.32]{./images/mean_reverting_force.png}
+    \includegraphics[scale=0.32]{../images/mean_reverting_force.png}
 \end{center}
 Based on this graph, we can estimate the resholds for our algorithm. As an example, I set $\tau_{\text{up}} = \tau_{\text{down}} = 0.2$, such that it would hit most of the peaks. running
 our backtesting algorithm, we can now plot our positions, where a red line indicates shorting the spread and a green line indicates longing the spread.
 \begin{center}
-    \includegraphics[scale=0.33]{./images/backtest_positions_1.png}
+    \includegraphics[scale=0.33]{../images/backtest_positions_1.png}
 \end{center}
 We can also plot the total portfolio value of our strategy over time (starting with a porfolio value $p=100$).
 \begin{center}
-    \includegraphics[scale=0.33]{./images/backtest_portfolio_value_1.png}
+    \includegraphics[scale=0.33]{../images/backtest_portfolio_value_1.png}
 \end{center}
-In the end, we observe that our final portfolio value is around $203.10593563249694$, which indicates a $203.10\%$ increase in portfolio value over a time period of $1066$ trading days.
+In the end, we observe that our final portfolio value is around $169.01$, which indicates a $69.01\%$ increase in portfolio value over a time period of $1066$ trading days.
 Given $252$ trading days in a given year, we've had our portfolio for $4.23$ years. Let's calulate our CAGR (Compound average growth rate).
 \begin{gather*}
-    \text{CAGR} = \left ( \frac{V_{\text{final}}}{V_{\text{begin}}} \right )^{\frac{1}{t}} - 1 = \left ( \frac{203.10}{100} \right )^{\frac{1}{4.23}} - 1 = 18.23 \%
+    \text{CAGR} = \left ( \frac{V_{\text{final}}}{V_{\text{begin}}} \right )^{\frac{1}{t}} - 1 = \left ( \frac{169.01}{100} \right )^{\frac{1}{4.23}} - 1 = 13.2 \%
 \end{gather*}
-We can see that our CAGR is around $18.23 \%$, which is absolutely top-of-the-line even when compared to some of the best hedge-fund standards. This is even more impressive considering
+We can see that our CAGR is around $13.2 \%$, which is relatively high even when compared to some of the best hedge-fund standards. This is even more impressive considering
 that this is a statistical arbitrage strategy that isolates the market effect, thus is esentially "recession-proof". For reference, the S\&P-500 returned an average CAGR of just
 $11.24 \%$ over the same time period, and experienced a very strong rally in late 2020, the S\&P usually averages around 8\% per year.
 
-\section{Optimizations and Model Improvements}
+\section{Limitations}
 
-We notice that our algorithm, while generating some pretty impressive returns, does not fully capture potential value, mostly due to us using a pre-set criterion for the mean-reverting
-force to fire signals. Originally, this section was reserved for optimizing this value using basic mathematical non-linear programming methods. This would have likely required the use
-a whole lot more theory, while delivering an algorithm that is less flexible than what we are proposing next, and would be way out of line of the IB mathematics curriculum. The only
-upside to this is that these optimization problems are very common in quantitative finance and should be in every Quant Researcher's toolbox. Rather, in this section, we will propose
-a series of adjustments to the model that will make it more flexible, usable, and generate higher returns.
+While the baseline returns are impressive, there are some critical limitations of performing statistical arbitrage with our model. Wouldn't it be great if it were this simple to
+generate above-market uncorrelated returns, who would need Merton Jump Diffusion, Levy Processes, and the crazy computing hardware they use over at Jane Street to carry out
+liquidity provision operations. So let's list some of the limitations this approach entails.
+\begin{itemize}
+    \item Fixed Averages - The model uses a fixed mean function for computing the Ornstein Uhlenbeck process, it would be far better to use a well-calibrated simple moving average.
+    \item Over-reliance on the mean-reverting force - In addition to using the mean reverting force to carry trading signals, it would be better to wait until the time-series reaches
+    a supremum and then carry out the trade (this is fairly simple to implement with Gaussian Kernel Convolution).
+    \item Ideally, you would also use the mean-reverting force to place weights on different positions in a portfolio optimization algorithm.
+    \item The current model has only been backtest on the (AMGM, VOD) pair, ideally you would backtest on all pairs that we computed the cointegration coefficient for.
+    \item Use the Hurst Exponent to test long-term mean-reversion.
+    \item We omit some factors such as transaction costs.
+\end{itemize}
 
-\subsection{Simple Moving Average}
+\newpage
+\section{Conclusion}
 
-We currently compute the mean function $\mu(t)$ by running a simple OLS regression and then using the line of best fit as an estimator for the mean. This makes us unable to adjust
-to dynamically changing base values of the spread oscillations. It's also better to recompute the mean as we go through time in the backtest, and we should have done this anyway in
-our base model. We define the SMA with the following:
-\begin{gather*}
-    \mu(t) = \frac{1}{n} \sum_{i = t - n}^{t} \mathcal{X}_{i} \text{, where } |\mathcal{X}| \ge n
-\end{gather*}
-Where $n$ is the sample size for the SMA. Esentially, the number of time frames we consider looking back.
-\begin{center}
-    \includegraphics[scale=0.38]{./images/spreads_sma.png}
-\end{center}
-You can see that the 150 day SMA captures the dynamic nature of spreads a little better, while still not being perfect.
-
-\subsection{Optimizing Signals for Local Suprema}
-
-We intuitively note the fact that the most optimal entry and exit points (signal points) in a stat-arb strategy focusing OU oscillations in equity spreads are local suprema points of
-the time-discrete price/spread function. Since out pricing data resembles a function that is discrete and not continuous, we cannot use a limit converging to zero to calculate the derivative
-of the prices. Thus we cannot use a regular derivative (since a requirement for that is having a continuous function), but we can
-approximate the derivative using a technique resembling Numerical Differentiation. General Numerical Differentiation relies on approximating the tangent using a secant line, by applying some
-finite difference $\Delta x$.
-\begin{gather*}
-    f'(x) = \underset{h \to 0}{\lim} \frac{f(x + h) - f(x)}{h} \approx
-    \frac{f(x + \Delta x) - f(x)}{\Delta x}
-\end{gather*}
-Numerical Differentiation also relies on the function consisting of time-continuous data, since our data is time-discrete, the minimum step-size we can use is the resolution of our
-dataset. Thus, we can simply define our discrete derivative as the change between the current value $X_{t}$ and the previous value $X_{t - 1}$, $\frac{dX_{t}}{dt} = X_{t} - X_{t - 1}$.
-We can draft up the following algorithm.
-
-\begin{algorithm}
-    \caption{Time Series Derivative Algorithm}
-    \begin{algorithmic}
-        \State {\texttt{last} $\leftarrow$ $0$}
-        \For{$x$ $\in$ $\mathcal{X}$}
-            \State{\texttt{derivative}[t] $\leftarrow$ $x - \texttt{last}$}
-            \State{\texttt{last} $\leftarrow x$}
-        \EndFor
-    \end{algorithmic}
-\end{algorithm}
-We can now use the algorithm to compute the derivative of the AMGN/VOD Spread.
-\begin{center}
-    \includegraphics[scale=0.40]{./images/amgn_vod_derivative.png}
-\end{center}
-We notice that the result is very noisy and we would get a lot of suprema points if we were to search for them, we need to use a function to smooth out the underlying data, so
-small changes in momentum won't cause the supremum signal to fire.
+In conclusion, using the Ornstein-Uhlenbeck process to drive signals in a statistical arbitrage strategy with cointegration testing for equity pairs selection can deliver above-market
+returns, while being uncorrelated to directional moves on the market. Our strategy, trading the spread between 'NASDAQ: AMGN' and 'NASDAQ: VOD' delivered a CAGR of $13.2 \%$, compared to
+the S\&P's $11.24 \%$ return over the 4-year trading period. Please note that past performance does not indicate future results. We have also explored the intuition and
+formalization of the Ornstein-Uhlenbeck SDE, and its continuous and discrete time solutions. This work demonstrated the feasability of integrating stochastic process models
+into algorithmic trading.
 
 \newpage
 
-\subsection{Gaussian Kernel Smoothing}
-
-\subsection{Performance of Improved Backtest}
-
+\newpage
+\bibliography{references}
+\bibliographystyle{plainnat}
 \newpage
 
 \section{Appendix}
 
 \begin{center}
-    \includegraphics[scale=0.40]{./images/full_cointegration_heatmap.png}
+    \includegraphics[scale=0.40]{../images/full_cointegration_heatmap.png}
 \end{center}
 
 \definecolor{dkgreen}{rgb}{0,0.6,0}
@@ -1319,6 +1289,86 @@ for (entry, exit) in short_trades:
     plt.plot([entry, exit], [entry_y, exit_y], linewidth=5, color='red')
 
 plt.show()
+\end{lstlisting}
+
+Code for getting the NASDAQ-100 dataset from the Tiingo API
+
+\begin{lstlisting}
+# get data for all NASDAQ 100 stocks
+# source for sticker list: https://cseweb.ucsd.edu/~yaq007/NASDAQ100_stock_data.html
+
+import requests
+import pandas as pd
+from datetime import datetime, timedelta
+
+api_key = 'YOUR_API_KEY'
+headers = {
+    'Content-Type': 'application/json'
+}
+
+START_DATE = '2014-1-1'
+END_DATE = '2024-1-1'
+
+handle = open('../data/nasdaq_100.txt', 'r')
+symbols = handle.readlines()[:-1]
+
+for ticker in symbols:
+    ticker = ticker.strip()
+    print(ticker)
+    ticker = 'NDX'
+
+    url = f"https://api.tiingo.com/tiingo/daily/{ticker}/" \
+            + "prices?startDate={START_DATE}&endDate={END_DATE}&token={api_key}"
+
+    request_resp = requests.get(url, headers=headers)
+    json = request_resp.json()
+    print(json)
+
+    prices = []
+    volumes = []
+
+    for time_item in json:
+        prices.append(time_item["open"])
+        volumes.append(time_item["volume"])
+
+    dataframe = pd.DataFrame([ prices, volumes ]).T
+    dataframe.to_pickle(f'../data/nasdaq_original/{ticker}.pkl')
+
+    print(dataframe)
+\end{lstlisting}
+
+Code for normalizing price data (since this is statarb)
+
+\begin{lstlisting}
+# Normalize equity prices to an initial value;
+# this is standard practice in stat-arb and will
+# make directional effects stronger because we
+# omit magnitudes.
+
+# Read from `nasdaq_original` and write
+# normalized to `nasdaq`
+
+import os
+import pandas as pd
+
+data_path = "../data/nasdaq_original/"
+export_path = "../data/nasdaq/"
+
+for filename in os.listdir(data_path):
+    file = os.path.join(data_path, filename)
+    df = pd.read_pickle(file)
+
+    prices = df[0]
+    initial = prices[0]
+
+    normalized = prices / initial
+    normalized_df = pd.DataFrame({
+        0: normalized,
+        1: df[1]
+    })
+
+    export_file = os.path.join(export_path, filename)
+    normalized_df.to_pickle(export_file)
 \end{lstlisting}
 
 \end{spacing}

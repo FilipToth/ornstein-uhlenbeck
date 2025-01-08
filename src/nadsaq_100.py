@@ -21,8 +21,11 @@ for ticker in symbols:
     print(ticker)
     ticker = 'NDX'
 
-    requestResponse = requests.get(f"https://api.tiingo.com/tiingo/daily/{ticker}/prices?startDate={START_DATE}&endDate={END_DATE}&token={api_key}", headers=headers)
-    json = requestResponse.json()
+    url = f"https://api.tiingo.com/tiingo/daily/{ticker}/" \
+            + "prices?startDate={START_DATE}&endDate={END_DATE}&token={api_key}"
+
+    request_resp = requests.get(url, headers=headers)
+    json = request_resp.json()
     print(json)
 
     prices = []
